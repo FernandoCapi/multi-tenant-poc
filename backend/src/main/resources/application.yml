@@ -17,6 +17,9 @@ spring:
     # Schema owner role, used only for migrations
     user: ${DB_OWNER_USER:app_owner}
     password: ${DB_OWNER_PASSWORD:${APP_OWNER_PASSWORD:}}
+    # A database seeded with the "local" profile must still start without it: the demo data is
+    # a repeatable migration that is simply not on the path then
+    ignore-migration-patterns: "*:future,repeatable:missing"
   jpa:
     open-in-view: false
     hibernate:

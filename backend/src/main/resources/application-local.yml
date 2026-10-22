@@ -1,0 +1,4 @@
+# Local development profile: adds the demo families (D-11) to the migrations.
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed

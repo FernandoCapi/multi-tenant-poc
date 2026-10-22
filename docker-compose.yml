@@ -31,6 +31,8 @@ services:
       DB_OWNER_USER: app_owner
       DB_OWNER_PASSWORD: ${APP_OWNER_PASSWORD:?set APP_OWNER_PASSWORD in .env}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      # Loads the demo families (db/seed)
+      SPRING_PROFILES_ACTIVE: local
     ports:
       - "8080:8080"
     depends_on:
