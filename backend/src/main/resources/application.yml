@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: vesta-backend
+  datasource:
+    # Runtime role: no superuser, no BYPASSRLS (ADR-0001)
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/vesta}
+    username: ${DB_APP_USER:app_user}
+    password: ${DB_APP_PASSWORD:}
+  flyway:
+    # Schema owner role, used only for migrations
+    user: ${DB_OWNER_USER:app_owner}
+    password: ${DB_OWNER_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
