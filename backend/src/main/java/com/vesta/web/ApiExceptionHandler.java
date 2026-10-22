@@ -12,6 +12,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.vesta.auth.InvalidCredentialsException;
+import com.vesta.user.UnknownAuthenticatedUserException;
 
 /** Maps errors to problem details with Portuguese messages (docs/requisitos.md §7). */
 @RestControllerAdvice
@@ -21,6 +22,14 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     ProblemDetail handleInvalidCredentials() {
         // Same answer for unknown e-mail and wrong password (CA-05.2)
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "E-mail ou senha inválidos.");
+        problem.setTitle("Não autenticado");
+        return problem;
+    }
+
+    @ExceptionHandler(UnknownAuthenticatedUserException.class)
+    ProblemDetail handleUnknownAuthenticatedUser() {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED, "Faça login para acessar este recurso.");
         problem.setTitle("Não autenticado");
         return problem;
     }

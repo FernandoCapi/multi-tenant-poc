@@ -25,7 +25,10 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+
+import com.vesta.tenant.TenantContextFilter;
 
 /** Stateless bearer-token security (ADR-0002): only login and health are public. */
 @Configuration(proxyBeanMethods = false)
@@ -50,7 +53,8 @@ class SecurityConfiguration {
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(Customizer.withDefaults())
                         .authenticationEntryPoint(entryPoint))
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(entryPoint));
+                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(entryPoint))
+                .addFilterAfter(new TenantContextFilter(), BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 
