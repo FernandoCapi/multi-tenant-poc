@@ -39,6 +39,7 @@
 | IA-19 | Instalação do JDK 21 | `winget install EclipseAdoptium.Temurin.21.JDK` | Rejeitada (inadequada) | JDK em pasta do usuário, ativado por sessão | [SI-001](sugestoes-incorretas.md#si-001--instalar-o-jdk-21-via-winget) |
 | IA-20 | Vínculo do tenant à transação | Estender `JpaTransactionManager` e aplicar `set_config` no `doBegin`; UUID nulo como sentinela no Hibernate; teste de catálogo exigindo RLS em toda tabela; testes de mutação | Aceita (plano aprovado) | Implementado; evidências no ADR-0001 | P-003 |
 | IA-21 | Configuração local | Fazer o backend ler o `.env` da raiz quando roda fora do Docker, mapeando `APP_USER_PASSWORD`/`APP_OWNER_PASSWORD` como fallback | Aceita | Implementado em `application.yml` | P-004 |
+| IA-22 | Avisos de inspeção em `Goal` | Não tornar `final` nem local campos persistentes (a JPA proíbe e o Hibernate os preenche por reflexão); supressão pontual com justificativa | Aceita | `@SuppressWarnings` em `currency` e `status` | P-005 |
 
 ## Observações
 

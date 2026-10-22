@@ -12,6 +12,7 @@
 | P-002 | 2026-10-22 | Aprovação da documentação, convenções de Git e commits | `CLAUDE.md` (seção Git), commits na branch `docs/p-001-especificacao-inicial` |
 | P-003 | 2026-10-22 | Estrutura do monorepo, Docker Compose, banco com RLS e primeiros testes de isolamento | `backend/`, `infra/`, `bruno/`, `docker-compose.yml`, `docs/setup-local.md`, ADR-0001 (complemento), commits na branch `feat/p-003-fundacao-rls` |
 | P-004 | 2026-10-22 | Ajustes do ambiente local: repositório local, credenciais e leitura do `.env` | `backend/src/main/resources/application.yml`, `docs/setup-local.md` |
+| P-005 | 2026-10-22 | Avisos de inspeção na entidade `Goal` | `backend/src/main/java/com/vesta/goal/Goal.java` |
 
 ---
 
@@ -385,3 +386,20 @@ Para subir o banco:
    e com `backend/` como diretório de trabalho; a partir de uma pasta sem `.env`, falha com a senha
    vazia (prova de que a senha vem do `.env`). Os 31 testes continuam passando e o container do
    Compose sobe saudável.
+
+---
+
+## P-005 — Avisos de inspeção na entidade Goal
+
+- **Data:** 2026-10-22
+- **Prompt:** *"A aplicação agora rodou com sucesso. Pequeno ajuste antes de prosseguirmos, o sonarqube
+  trouxe reclamações no classe goal, entenda e faça as correções necessárias: Field can be converted
+  to a local variable / Field 'currency' may be 'final' / Field 'status' may be 'final'"*
+- **Análise da IA:** os três avisos são falsos positivos comuns em entidades JPA. Nenhum código altera
+  `currency` e `status` depois da criação, mas o Hibernate os preenche por reflexão ao carregar do
+  banco, e a especificação JPA proíbe campos persistentes `final`.
+- **Perguntas:** qual campo recebeu o aviso de variável local (resposta: `currency`) e como tratar
+  os avisos (resposta: supressão pontual, a recomendação da IA).
+- **Resultado:** `@SuppressWarnings` só nos dois campos, com comentário justificando; a supressão em
+  `status` deve sair quando as transições de status (D-08) forem implementadas. O espaçamento
+  alterado acidentalmente no arquivo local foi normalizado. `./mvnw verify`: 31 testes passando.

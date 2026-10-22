@@ -12,13 +12,14 @@
 | P-002 | 2026-10-22 | Convenções de Git no `CLAUDE.md` e commits da documentação | Documentação da P-001 aprovada e commitada em commits atômicos | [historico-de-prompts.md](historico-de-prompts.md#p-002--aprovação-da-documentação-e-convenções-de-git) |
 | P-003 | 2026-10-22 | Planejamento e implementação da fundação técnica | Monorepo, Compose, esquema com RLS forçada, vínculo do tenant à transação, 31 testes e 3 testes de mutação | [historico-de-prompts.md](historico-de-prompts.md#p-003--fundação-técnica-monorepo-compose-rls-e-testes-de-isolamento), [ADR-0001](../adr/0001-estrategia-multitenant.md#evidências) |
 | P-004 | 2026-10-22 | Ajustes do ambiente local | Branch movida para o repositório local; backend lê o `.env` fora do Docker | [historico-de-prompts.md](historico-de-prompts.md#p-004--ajustes-do-ambiente-local) |
+| P-005 | 2026-10-22 | Análise de avisos de inspeção | Falsos positivos de JPA suprimidos pontualmente, com justificativa | [historico-de-prompts.md](historico-de-prompts.md#p-005--avisos-de-inspeção-na-entidade-goal) |
 
 ## Indicadores acumulados
 
 | Indicador | Valor | Observação |
 |---|---|---|
-| Etapas registradas | 4 | P-001..P-004 |
-| Recomendações da IA decididas | 16 | 15 aceitas, 1 não adotada ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
+| Etapas registradas | 5 | P-001..P-005 |
+| Recomendações da IA decididas | 17 | 16 aceitas, 1 não adotada ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
 | Sugestões incorretas evidenciadas | 1 | SI-001 ([sugestoes-incorretas.md](sugestoes-incorretas.md)) |
 | Linhas de código produzidas | ≈ 1.090 | Até P-003: Java de produção 295, Java de teste 594, SQL 173, shell 30 (`wc -l`, inclui linhas em branco e comentários) |
 | Testes automatizados | 31 | Todos passando em 2026-10-22 (`./mvnw verify`) |
