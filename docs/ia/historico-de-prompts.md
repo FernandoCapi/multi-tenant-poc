@@ -11,6 +11,7 @@
 | P-001 | 2026-10-21 | Levantamento de requisitos e decisões de negócio | `docs/requisitos.md`, `docs/modelo-de-dominio.md`, `docs/decisoes-de-negocio.md`, `docs/adr/0001-estrategia-multitenant.md`, `docs/ia/*`, `CLAUDE.md`, `README.md` |
 | P-002 | 2026-10-22 | Aprovação da documentação, convenções de Git e commits | `CLAUDE.md` (seção Git), commits na branch `docs/p-001-especificacao-inicial` |
 | P-003 | 2026-10-22 | Estrutura do monorepo, Docker Compose, banco com RLS e primeiros testes de isolamento | `backend/`, `infra/`, `bruno/`, `docker-compose.yml`, `docs/setup-local.md`, ADR-0001 (complemento), commits na branch `feat/p-003-fundacao-rls` |
+| P-004 | 2026-10-22 | Ajustes do ambiente local: repositório local, credenciais e leitura do `.env` | `backend/src/main/resources/application.yml`, `docs/setup-local.md` |
 
 ---
 
@@ -353,3 +354,34 @@ Para subir o banco:
 - 31 testes automatizados passando; testes de mutação confirmaram que eles detectam a ausência das
   proteções (detalhes no [report](ai-development-report.md) e no ADR-0001).
 - Sem push nem PR (não solicitados).
+
+---
+
+## P-004 — Ajustes do ambiente local
+
+- **Data:** 2026-10-22
+- **Ferramenta/modelo:** Claude Code, modelo Claude Opus 5.5.
+- **Branch:** `feat/p-003-fundacao-rls`. A mudança complementa a fundação ainda não mergeada.
+
+### Prompts e resultado
+
+1. *"não consigo enxergar a branch e as mudanças na minha IDE local (IntelliJ) possivelmente por
+   estar em um workspace diferente. Por favor transfira para o local, e em diante, mantenha em local
+   para que eu possa acompanhar as mudanças através da minha IDE"*
+   → A branch estava em uso por um worktree separado. A IA desocupou a branch no worktree, fez o
+   checkout dela no repositório local (`C:\Users\ferna\Music\multi-tenant-poc`), copiou o `.env` e
+   subiu o Compose a partir da pasta local. Verificação: 31 testes passando e `/actuator/health` → `UP`.
+   O trabalho passa a ser feito sempre no repositório local.
+2. *"como foram definidas as credenciais do banco de dados, preciso cria-las?"*
+   → Explicação: as senhas vêm do `.env`, e as roles são criadas pelo script de init na primeira
+   inicialização do volume.
+3. *"A run falhou com: ... The server requested SCRAM-based authentication, but the password is an
+   empty string. Coloquei no env variables da IDE: POSTGRES_USER=app_owner;POSTGRES_PASSWORD=app-owner-dev"*
+   → Diagnóstico: o backend lê `DB_APP_PASSWORD`/`DB_OWNER_PASSWORD`, não `POSTGRES_*`, e deve
+   conectar como `app_user`, não como `app_owner`. A IA ofereceu ler o `.env` automaticamente.
+4. *"sim, faça o backend ler o .env"*
+   → `application.yml` importa `.env` da raiz ou de `../`, com fallback para
+   `APP_USER_PASSWORD`/`APP_OWNER_PASSWORD`. Verificado: inicia sem variáveis de ambiente com a raiz
+   e com `backend/` como diretório de trabalho; a partir de uma pasta sem `.env`, falha com a senha
+   vazia (prova de que a senha vem do `.env`). Os 31 testes continuam passando e o container do
+   Compose sobe saudável.

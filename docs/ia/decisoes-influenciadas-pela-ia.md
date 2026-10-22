@@ -38,6 +38,7 @@
 | IA-18 | Versões da stack | Plano com Spring Boot 3.5 e PostgreSQL 17 | Não adotada | T-01: Spring Boot 4.1.1, PostgreSQL 18.6, Java 21 | P-003, revisão do plano |
 | IA-19 | Instalação do JDK 21 | `winget install EclipseAdoptium.Temurin.21.JDK` | Rejeitada (inadequada) | JDK em pasta do usuário, ativado por sessão | [SI-001](sugestoes-incorretas.md#si-001--instalar-o-jdk-21-via-winget) |
 | IA-20 | Vínculo do tenant à transação | Estender `JpaTransactionManager` e aplicar `set_config` no `doBegin`; UUID nulo como sentinela no Hibernate; teste de catálogo exigindo RLS em toda tabela; testes de mutação | Aceita (plano aprovado) | Implementado; evidências no ADR-0001 | P-003 |
+| IA-21 | Configuração local | Fazer o backend ler o `.env` da raiz quando roda fora do Docker, mapeando `APP_USER_PASSWORD`/`APP_OWNER_PASSWORD` como fallback | Aceita | Implementado em `application.yml` | P-004 |
 
 ## Observações
 

@@ -11,13 +11,14 @@
 | P-001 | 2026-10-21 | Análise de requisitos, levantamento de decisões, especificação e ADR proposto | 12 decisões de negócio, 1 convenção, 7 itens pendentes, ADR-0001 proposto | [historico-de-prompts.md](historico-de-prompts.md#p-001--definição-dos-requisitos-da-poc) |
 | P-002 | 2026-10-22 | Convenções de Git no `CLAUDE.md` e commits da documentação | Documentação da P-001 aprovada e commitada em commits atômicos | [historico-de-prompts.md](historico-de-prompts.md#p-002--aprovação-da-documentação-e-convenções-de-git) |
 | P-003 | 2026-10-22 | Planejamento e implementação da fundação técnica | Monorepo, Compose, esquema com RLS forçada, vínculo do tenant à transação, 31 testes e 3 testes de mutação | [historico-de-prompts.md](historico-de-prompts.md#p-003--fundação-técnica-monorepo-compose-rls-e-testes-de-isolamento), [ADR-0001](../adr/0001-estrategia-multitenant.md#evidências) |
+| P-004 | 2026-10-22 | Ajustes do ambiente local | Branch movida para o repositório local; backend lê o `.env` fora do Docker | [historico-de-prompts.md](historico-de-prompts.md#p-004--ajustes-do-ambiente-local) |
 
 ## Indicadores acumulados
 
 | Indicador | Valor | Observação |
 |---|---|---|
-| Etapas registradas | 3 | P-001, P-002, P-003 |
-| Recomendações da IA decididas | 15 | 14 aceitas, 1 não adotada ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
+| Etapas registradas | 4 | P-001..P-004 |
+| Recomendações da IA decididas | 16 | 15 aceitas, 1 não adotada ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
 | Sugestões incorretas evidenciadas | 1 | SI-001 ([sugestoes-incorretas.md](sugestoes-incorretas.md)) |
 | Linhas de código produzidas | ≈ 1.090 | Até P-003: Java de produção 295, Java de teste 594, SQL 173, shell 30 (`wc -l`, inclui linhas em branco e comentários) |
 | Testes automatizados | 31 | Todos passando em 2026-10-22 (`./mvnw verify`) |
@@ -135,3 +136,18 @@ As alterações das mutações foram desfeitas; o arquivo restaurado foi compara
   autorização por objetivo, seeds de demonstração e frontend.
 - Lookup de login (risco em aberto no ADR-0001).
 - Sem push nem PR (não solicitados). Os itens PV-01..PV-04, PV-06 e PV-07 continuam pendentes.
+
+---
+
+## P-004 — Ajustes do ambiente local (2026-10-22)
+
+- **Repositório local:** a branch estava presa a um worktree separado, invisível para a IDE do
+  usuário. Ela foi movida para o repositório local, e o Compose agora sobe a partir dele.
+- **Credenciais:** o usuário tentou configurar o backend com as variáveis `POSTGRES_*` e `app_owner`.
+  A IA explicou a separação das roles (ADR-0001) e, com aprovação, fez o backend ler o `.env` fora do Docker.
+- **Verificações executadas:** 31 testes passando; backend iniciado sem variáveis de ambiente a
+  partir da raiz e de `backend/`; caso negativo (pasta sem `.env` → senha vazia); container do
+  Compose saudável após o rebuild.
+- **Observação:** a mensagem de erro não indicava quais variáveis o backend lê, e o guia de setup
+  só mencionava as variáveis no comando de terminal. O guia agora traz uma tabela de resolução das
+  propriedades e uma entrada de solução de problemas para esse erro.
