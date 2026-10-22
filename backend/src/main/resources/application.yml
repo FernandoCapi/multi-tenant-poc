@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: vesta-backend
+  config:
+    # Local runs outside Docker (IDE, spring-boot:run) read the repository .env, whether the
+    # working directory is the repository root or backend/. Missing files are ignored, and real
+    # environment variables (Docker Compose) still take precedence.
+    import:
+      - optional:file:./.env[.properties]
+      - optional:file:../.env[.properties]
+  datasource:
+    # Runtime role: no superuser, no BYPASSRLS (ADR-0001)
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/vesta}
+    username: ${DB_APP_USER:app_user}
+    password: ${DB_APP_PASSWORD:${APP_USER_PASSWORD:}}
+  flyway:
+    # Schema owner role, used only for migrations
+    user: ${DB_OWNER_USER:app_owner}
+    password: ${DB_OWNER_PASSWORD:${APP_OWNER_PASSWORD:}}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

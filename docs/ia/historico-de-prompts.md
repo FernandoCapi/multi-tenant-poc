@@ -10,6 +10,9 @@
 |---|---|---|---|
 | P-001 | 2026-10-21 | Levantamento de requisitos e decisões de negócio | `docs/requisitos.md`, `docs/modelo-de-dominio.md`, `docs/decisoes-de-negocio.md`, `docs/adr/0001-estrategia-multitenant.md`, `docs/ia/*`, `CLAUDE.md`, `README.md` |
 | P-002 | 2026-10-22 | Aprovação da documentação, convenções de Git e commits | `CLAUDE.md` (seção Git), commits na branch `docs/p-001-especificacao-inicial` |
+| P-003 | 2026-10-22 | Estrutura do monorepo, Docker Compose, banco com RLS e primeiros testes de isolamento | `backend/`, `infra/`, `bruno/`, `docker-compose.yml`, `docs/setup-local.md`, ADR-0001 (complemento), commits na branch `feat/p-003-fundacao-rls` |
+| P-004 | 2026-10-22 | Ajustes do ambiente local: repositório local, credenciais e leitura do `.env` | `backend/src/main/resources/application.yml`, `docs/setup-local.md` |
+| P-005 | 2026-10-22 | Avisos de inspeção na entidade `Goal` | `backend/src/main/java/com/vesta/goal/Goal.java` |
 
 ---
 
@@ -247,3 +250,156 @@ Apenas dê push e crie commits quando solicitado. Adicione estas regras no claud
 - Regras de Git adicionadas ao `CLAUDE.md`: branch por feature/escopo a partir da `main`,
   Conventional Commits atômicos, sem `Co-Authored-By`, commit/push/PR somente quando solicitado.
 - Documentos da P-001 commitados em commits atômicos na nova branch. Não foi feito push.
+- **Continuação:** em seguida o usuário pediu *"dê push na branch"*. A branch foi enviada ao
+  `origin`, e o usuário abriu e mergeou o PR #1 na `main` (merge `7fc1131`).
+
+---
+
+## P-003 — Fundação técnica: monorepo, Compose, RLS e testes de isolamento
+
+- **Data:** 2026-10-22
+- **Ferramenta/modelo:** Claude Code, modelo Claude Opus 5.5. Planejamento em plan mode e depois implementação.
+- **Branch:** `feat/p-003-fundacao-rls`, criada a partir de `origin/main` (`7fc1131`).
+
+### Prompt integral
+
+```text
+A partir de uma nova branch através da main, planeje o próximo passo:
+Estrutura do monorepo, Docker Compose, banco com RLS e os primeiros testes de isolamento
+```
+
+### Fluxo da interação
+
+1. A IA verificou o estado do Git (PR #1 mergeado) e o ambiente: JDK 17 no `JAVA_HOME`, `java` 8
+   no PATH, sem Maven, Gradle 8.3 global, Docker parado.
+2. Lote de perguntas técnicas (respostas abaixo).
+3. A IA apresentou um plano com Spring Boot 3.5, PostgreSQL 17 e instalação do JDK 21 via `winget`.
+4. O usuário rejeitou o plano e enviou o resumo de ambiente abaixo: outro agente já havia preparado o
+   ambiente com outras versões e restrições. O plano foi revisado e aprovado.
+5. Implementação em 11 commits atômicos, com testes e testes de mutação (ver report).
+
+### Respostas do usuário
+
+| Pergunta | Resposta |
+|---|---|
+| Persistência | JPA + Hibernate `@TenantId` (recomendação da IA) |
+| Build | Maven Wrapper (recomendação da IA) |
+| Versão do Java | *"Java 21, Temurin jdk-21.0.12.1+1"* |
+| Frontend nesta etapa | Só na etapa da interface (recomendação da IA) |
+| Confirmar PV-05 no esquema | Confirmar PV-05 (recomendação da IA) → D-13 |
+| Pacote base | *"com.vesta O nome do projeto será Vesta"* → C-02 |
+
+### Resumo de ambiente enviado pelo usuário (revisão do plano)
+
+<details>
+<summary>Texto enviado pelo usuário (conteúdo literal; quebras de linha reconstituídas)</summary>
+
+```text
+Mudei algumas versões e preparei o ambiente utilizando outro agent. Segue o resumo abaixo:
+# Ambiente preparado para o multi-tenant-poc (Windows 11)
+## Versões escolhidas e por quê
+| Componente | Versão | Motivo |
+|---|---|---|
+| JDK | Eclipse Temurin 21.0.12.1+1 (LTS) | Java 21 é a LTS atual com suporte longo; Spring Boot 4.1.1 exige Java 17 a 26. Temurin é a distribuição OpenJDK de referência, sem licença comercial. |
+| Spring Boot | 4.1.1 | Versão estável corrente (Spring Framework 7). Não é instalação de sistema: entra como `spring-boot-starter-parent` no `pom.xml`. |
+| Maven | 3.10.0 | Versão estável corrente; Spring Boot 4.1.1 exige 3.6.3+. |
+| PostgreSQL | 18.6 (imagem Docker `postgres:18.6`) | Major atual. Roda apenas em container, consistente com a stack do projeto (Docker Compose para execução local). Nada foi instalado nativamente no Windows. |
+## Restrição não negociável
+Esta máquina tem outro projeto que depende do **Java 17 + Gradle 8.3** instalados globalmente
+(`JAVA_HOME` de máquina aponta para o Temurin 17 do Chocolatey). **Nada disso pode ser alterado.**
+Por isso o JDK 21 e o Maven NÃO foram instalados por winget, Chocolatey ou MSI: o pacote winget do
+Temurin usa `ADDLOCAL=ALL`, que sobrescreve PATH, `JAVA_HOME` e o registro JavaSoft. Tudo ficou em
+pastas do usuário, sem alterar PATH, variáveis globais ou registro. Verificado com snapshot antes e
+depois (zero diferenças) e `gradle -v` continuando na JVM 17.
+Regras para você, agent:
+- **Nunca** proponha ou execute `winget install`, `choco install`, MSI ou alteração de `JAVA_HOME`,
+  `PATH`, `M2_HOME` em escopo de usuário ou máquina.
+- **Nunca** rode `choco upgrade all`.
+- Não instale PostgreSQL nativo; use Docker.
+## Onde está cada coisa
+- JDK 21: `C:\Users\ferna\.jdks\jdk-21.0.12.1+1` (pasta que o IntelliJ já escaneia; o SDK aparece
+  em Project Structure sem configuração global).
+- Maven 3.10.0: `C:\Users\ferna\tools\apache-maven-3.10.0`
+- Scripts de ativação: `C:\Users\ferna\tools\use-java21.ps1` e `C:\Users\ferna\tools\use-java21.cmd`
+- Imagem Docker `postgres:18.6` já baixada. Docker 29.9 e Compose v5.6 instalados. Porta 5432 livre.
+## Como rodar (obrigatório antes de qualquer comando Java/Maven)
+O JDK 21 e o Maven só existem na sessão do terminal onde o script de ativação foi executado.
+Terminais novos continuam com Java 17 (e `java` no PATH resolve para um Java 8 da Oracle, situação
+pré-existente que não deve ser "corrigida").
+PowerShell (dot-source, com o ponto no início):
+    . C:\Users\ferna\tools\use-java21.ps1
+cmd.exe:
+    call C:\Users\ferna\tools\use-java21.cmd
+Resultado esperado: `java -version` mostra `21.0.12.1` Temurin e `mvn -v` mostra `3.10.0` com
+`Java version: 21.0.12.1`. Se mostrar 17 ou 1.8, o script não foi ativado nessa sessão.
+Para subir o banco:
+    docker compose up -d   (serviço com imagem `postgres:18.6`)
+## O que falta e cabe a você ao criar o projeto
+1. Gerar o backend com `spring-boot-starter-parent` 4.1.1 e `<java.version>21</java.version>`.
+2. Incluir o **Maven Wrapper** fixado em 3.10.0 (`.mvn/wrapper/maven-wrapper.properties` com
+   `distributionUrl` para `apache-maven-3.10.0-bin.zip`), para que `./mvnw` funcione mesmo sem o
+   script de ativação. O `JAVA_HOME` ainda precisa vir do script.
+3. Criar `docker-compose.yml` com serviço `postgres` na imagem `postgres:18.6`, porta `5432:5432`,
+   volume nomeado e variáveis `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`.
+4. Atualizar docs/ADR do repositório, que ainda citam Spring Boot 3, para Spring Boot 4.1.1 / Java 21.
+```
+
+</details>
+
+### Resultado
+
+- Monorepo com `backend/` (Spring Boot 4.1.1, Java 21, Maven Wrapper 3.10.0), `infra/`, `bruno/` e
+  Docker Compose (PostgreSQL 18.6 + backend).
+- Esquema completo com RLS forçada, FKs compostas e privilégios mínimos; `TenantContext`, resolver
+  do Hibernate e `TenantAwareJpaTransactionManager`.
+- 31 testes automatizados passando; testes de mutação confirmaram que eles detectam a ausência das
+  proteções (detalhes no [report](ai-development-report.md) e no ADR-0001).
+- Sem push nem PR (não solicitados).
+
+---
+
+## P-004 — Ajustes do ambiente local
+
+- **Data:** 2026-10-22
+- **Ferramenta/modelo:** Claude Code, modelo Claude Opus 5.5.
+- **Branch:** `feat/p-003-fundacao-rls`. A mudança complementa a fundação ainda não mergeada.
+
+### Prompts e resultado
+
+1. *"não consigo enxergar a branch e as mudanças na minha IDE local (IntelliJ) possivelmente por
+   estar em um workspace diferente. Por favor transfira para o local, e em diante, mantenha em local
+   para que eu possa acompanhar as mudanças através da minha IDE"*
+   → A branch estava em uso por um worktree separado. A IA desocupou a branch no worktree, fez o
+   checkout dela no repositório local (`C:\Users\ferna\Music\multi-tenant-poc`), copiou o `.env` e
+   subiu o Compose a partir da pasta local. Verificação: 31 testes passando e `/actuator/health` → `UP`.
+   O trabalho passa a ser feito sempre no repositório local.
+2. *"como foram definidas as credenciais do banco de dados, preciso cria-las?"*
+   → Explicação: as senhas vêm do `.env`, e as roles são criadas pelo script de init na primeira
+   inicialização do volume.
+3. *"A run falhou com: ... The server requested SCRAM-based authentication, but the password is an
+   empty string. Coloquei no env variables da IDE: POSTGRES_USER=app_owner;POSTGRES_PASSWORD=app-owner-dev"*
+   → Diagnóstico: o backend lê `DB_APP_PASSWORD`/`DB_OWNER_PASSWORD`, não `POSTGRES_*`, e deve
+   conectar como `app_user`, não como `app_owner`. A IA ofereceu ler o `.env` automaticamente.
+4. *"sim, faça o backend ler o .env"*
+   → `application.yml` importa `.env` da raiz ou de `../`, com fallback para
+   `APP_USER_PASSWORD`/`APP_OWNER_PASSWORD`. Verificado: inicia sem variáveis de ambiente com a raiz
+   e com `backend/` como diretório de trabalho; a partir de uma pasta sem `.env`, falha com a senha
+   vazia (prova de que a senha vem do `.env`). Os 31 testes continuam passando e o container do
+   Compose sobe saudável.
+
+---
+
+## P-005 — Avisos de inspeção na entidade Goal
+
+- **Data:** 2026-10-22
+- **Prompt:** *"A aplicação agora rodou com sucesso. Pequeno ajuste antes de prosseguirmos, o sonarqube
+  trouxe reclamações no classe goal, entenda e faça as correções necessárias: Field can be converted
+  to a local variable / Field 'currency' may be 'final' / Field 'status' may be 'final'"*
+- **Análise da IA:** os três avisos são falsos positivos comuns em entidades JPA. Nenhum código altera
+  `currency` e `status` depois da criação, mas o Hibernate os preenche por reflexão ao carregar do
+  banco, e a especificação JPA proíbe campos persistentes `final`.
+- **Perguntas:** qual campo recebeu o aviso de variável local (resposta: `currency`) e como tratar
+  os avisos (resposta: supressão pontual, a recomendação da IA).
+- **Resultado:** `@SuppressWarnings` só nos dois campos, com comentário justificando; a supressão em
+  `status` deve sair quando as transições de status (D-08) forem implementadas. O espaçamento
+  alterado acidentalmente no arquivo local foi normalizado. `./mvnw verify`: 31 testes passando.

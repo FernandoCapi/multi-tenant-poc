@@ -2,7 +2,8 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-21
-- **Etapa:** P-001 (especificação; nada implementado nem validado ainda)
+- **Etapa:** P-001 (especificação); complementado em P-003 (2026-10-22) com a implementação e as
+  evidências da fundação — ver [Implementação](#implementação-p-003) e [Evidências](#evidências)
 - **Relacionados:** DT-02, DT-03, DT-04, DT-05; [requisitos](../requisitos.md) RS-01..RS-07; [modelo de domínio](../modelo-de-dominio.md)
 
 ## Contexto
@@ -13,7 +14,8 @@ por objetivo (D-01, D-05).
 
 Restrições já estabelecidas:
 
-- PostgreSQL, Spring Boot 3, Flyway (DT-01).
+- PostgreSQL, Spring Boot, Flyway (DT-01). Versões em uso desde P-003: PostgreSQL 18.6,
+  Spring Boot 4.1.1 (Hibernate 7.4), Java 21. A DT-01 original citava Spring Boot 3.
 - Tabelas compartilhadas com `family_id` (DT-02).
 - Contexto de tenant na aplicação, reforço na persistência e Row-Level Security (DT-03).
 - Usuário em uma única família, tenant resolvido no login e incluído no JWT (DT-04).
@@ -44,8 +46,12 @@ Restrições já estabelecidas:
 - Repositórios de negócio sempre filtram pelo tenant do contexto e, quando aplicável, pelo vínculo
   do usuário com o objetivo (`GoalMember`).
 - Escritas atribuem `family_id` a partir do `TenantContext`, nunca de um DTO.
-- O mecanismo concreto (ex.: filtro do Hibernate, especificações ou consultas explícitas) é escolhido
-  na implementação e registrado como complemento deste ADR.
+- Mecanismo escolhido em P-003: **JPA + Hibernate com `@TenantId`** (discriminador de tenant).
+  O Hibernate acrescenta o filtro de `family_id` nas consultas de entidades e preenche o campo na
+  inserção a partir do `TenantContext`. Consultas nativas não recebem esse filtro; nelas, só a RLS
+  protege, e um teste cobre exatamente esse caso.
+- Sem tenant no contexto, o resolver devolve o UUID nulo (`00000000-0000-0000-0000-000000000000`),
+  que não corresponde a nenhuma família: as consultas do Hibernate falham fechadas.
 
 ### 4. Row-Level Security no PostgreSQL
 
@@ -68,7 +74,7 @@ Restrições já estabelecidas:
 
   O terceiro argumento `true` dá o mesmo efeito de `SET LOCAL` (vale só até o fim da transação),
   mas aceita parâmetro vinculado, evitando concatenar o valor no SQL.
-- O tipo de `id` (`uuid`) é premissa deste ADR e será confirmado nas migrations.
+- Os identificadores são `uuid`, confirmado nas migrations (P-003).
 
 ### 5. Roles do banco
 
@@ -78,6 +84,10 @@ Restrições já estabelecidas:
 | `app_user` | Usada pela aplicação. | `NOSUPERUSER`, `NOBYPASSRLS`, sem ser dona das tabelas; apenas privilégios de DML necessários. |
 
 Superusers sempre ignoram a RLS; por isso a aplicação nunca se conecta como superuser.
+
+Privilégios de `app_user` (P-003): somente leitura em `families` e `users`; leitura e escrita em
+`goals` e `goal_members`; **somente `SELECT` e `INSERT`** em `contributions` e
+`contribution_reversals`. Assim, a imutabilidade das contribuições (D-02) também é garantida pelo banco.
 
 ### 6. Resolução do tenant: claim no JWT
 
@@ -130,15 +140,59 @@ preferível.
 
 ## Riscos e mitigações
 
-| Risco | Mitigação proposta | Validação a fazer |
+A coluna de validação descreve o teste esperado. A seção [Evidências](#evidências) registra quais
+deles já foram executados.
+
+| Risco | Mitigação proposta | Validação |
 |---|---|---|
 | **Login antes do tenant:** a busca do usuário por e-mail acontece sem `app.tenant_id`, e a RLS bloquearia a leitura. | A definir na implementação. Opções: (a) tabela global de credenciais sem RLS, contendo só e-mail, hash, `user_id` e `family_id`; (b) função `SECURITY DEFINER` restrita a esse lookup. A opção (a) é a mais simples; a escolha será registrada neste ADR. | Teste de login e teste de que a tabela de credenciais não expõe dados de negócio. |
-| **Pool de conexões:** um `SET` de sessão vazaria o tenant para a próxima requisição que usar a mesma conexão. | Usar apenas `set_config(..., true)` dentro da transação; nunca `SET` de sessão. | Teste de requisições sucessivas de tenants diferentes na mesma conexão (RS-07). |
-| **Acesso fora de transação:** sem transação, a configuração local não se aplica. | Toda operação de negócio dentro de transação; `spring.jpa.open-in-view=false`; leituras lazy fora da transação falham fechadas por causa da RLS. | Teste de consulta sem contexto retornando zero linhas (RS-06). |
-| **Dono das tabelas ignora a RLS sem `FORCE`.** | `FORCE ROW LEVEL SECURITY`; `app_user` não é dona das tabelas. | Teste executando consulta sem `WHERE` com `app_user` (RS-05). |
-| **Uso acidental de superuser ou role com BYPASSRLS.** | Credenciais separadas para Flyway e aplicação; checagem dos atributos da role. | Teste ou verificação que confirme `rolsuper = false` e `rolbypassrls = false` para `app_user`. |
-| **Escrita com `family_id` de outro tenant.** | `WITH CHECK` na policy, `family_id` vindo só do `TenantContext` e FKs compostas. | Teste com `family_id` forjado (N-2). |
+| **Pool de conexões:** um `SET` de sessão vazaria o tenant para a próxima requisição que usar a mesma conexão. | Usar apenas `set_config(..., true)` dentro da transação; nunca `SET` de sessão. | Teste de requisições sucessivas de tenants diferentes na mesma conexão (RS-07). **Feito em P-003.** |
+| **Acesso fora de transação:** sem transação, a configuração local não se aplica. | Toda operação de negócio dentro de transação; `spring.jpa.open-in-view=false`; leituras lazy fora da transação falham fechadas por causa da RLS. | Teste de consulta sem contexto retornando zero linhas (RS-06). **Feito em P-003.** |
+| **Dono das tabelas ignora a RLS sem `FORCE`.** | `FORCE ROW LEVEL SECURITY`; `app_user` não é dona das tabelas. | Teste executando consulta sem `WHERE` com `app_user` (RS-05). **Feito em P-003.** |
+| **Uso acidental de superuser ou role com BYPASSRLS.** | Credenciais separadas para Flyway e aplicação; checagem dos atributos da role. | Teste ou verificação que confirme `rolsuper = false` e `rolbypassrls = false` para `app_user`. **Feito em P-003.** |
+| **Escrita com `family_id` de outro tenant.** | `WITH CHECK` na policy, `family_id` vindo só do `TenantContext` e FKs compostas. | Teste com `family_id` forjado (N-2). **Feito no banco em P-003**; pela API, na etapa de endpoints. |
 | **Claim de tenant desatualizada no JWT.** | Expiração curta; risco baixo sem troca de família. | Documentado; sem teste específico na POC. |
+
+## Implementação (P-003)
+
+| Elemento | Onde |
+|---|---|
+| Roles `app_owner` e `app_user` | `infra/postgres/init/01-create-roles.sh` (Compose e Testcontainers usam o mesmo script) |
+| Esquema com `family_id`, `UNIQUE (family_id, id)` e FKs compostas | `backend/src/main/resources/db/migration/V1__create_core_schema.sql` |
+| Função `app_current_family_id()`, RLS `ENABLE` + `FORCE` e policies | `V2__enable_row_level_security.sql` |
+| Privilégios mínimos de `app_user` | `V3__grant_app_user_privileges.sql` |
+| `TenantContext` (ThreadLocal) | `backend/src/main/java/com/vesta/tenant/TenantContext.java` |
+| Resolver do Hibernate (`@TenantId`) | `TenantIdentifierResolver.java`, registrado em `TenantPersistenceConfiguration.java` |
+| `set_config('app.tenant_id', ?, true)` no início de cada transação | `TenantAwareJpaTransactionManager.java`: estende `JpaTransactionManager` e substitui o gerenciador de transações padrão. Se a definição do tenant falhar, a transação é desfeita e não é entregue. |
+| Configuração | `application.yml`: datasource `app_user`, Flyway `app_owner`, `open-in-view=false`, `ddl-auto=validate` |
+
+Ainda não implementado: preenchimento do `TenantContext` a partir do JWT (etapa de autenticação),
+lookup de login (risco em aberto abaixo) e autorização por objetivo.
+
+## Evidências
+
+Executadas em 2026-10-22, com JDK 21.0.12.1, Maven 3.10.0 e PostgreSQL 18.6 via Testcontainers.
+
+**Suíte `./mvnw verify`:** 31 testes, 0 falhas.
+
+| Classe | Testes | Cobre |
+|---|---|---|
+| `DatabaseSecurityTest` | 4 | `app_user` não é superuser, não tem BYPASSRLS e não é dona de tabelas; todas as tabelas com RLS forçada e policy; `app_user` não consegue desligar a RLS. |
+| `RowLevelSecurityTest` | 22 | RS-05/N-3 (SQL sem `WHERE` em cada tabela); RS-06 (sem tenant, inclusive o caso `''` na mesma conexão); RS-04/N-2 no banco (`WITH CHECK`); `UPDATE`/`DELETE` entre famílias afetam 0 linhas; FK composta; tenant inválido gera erro; imutabilidade; um estorno por contribuição. |
+| `TenantIsolationIntegrationTest` | 5 | Repositório e SQL nativo isolados; RS-07 (A → B → sem tenant na mesma conexão do pool, mesmo `pg_backend_pid`); `family_id` vindo do contexto; sem tenant, leitura vazia e escrita rejeitada. |
+
+**Testes de mutação** (alterações temporárias, desfeitas e não commitadas), para confirmar que os
+testes detectam a ausência de cada proteção:
+
+| Alteração | Resultado |
+|---|---|
+| Remover RLS e policy de `goals` | 7 de 26 testes de banco falharam, incluindo o teste de catálogo. |
+| Remover RLS e policy de `goals` (testes Spring) | 2 de 5 falharam: os de SQL nativo. O teste do repositório **passou**, o que mostra que o filtro do Hibernate isola sozinho. |
+| Não definir o tenant na transação | 4 de 5 testes Spring quebraram (3 falhas e 1 erro). A RLS bloqueia até o caminho do Hibernate quando o tenant não é definido. |
+
+**Ambiente Compose:** Flyway aplicou V1..V3 como `app_owner`; `app_user` vê 0 linhas em `goals` sem
+tenant; `alter table goals disable row level security` como `app_user` falha com
+`must be owner of table goals`.
 
 ## Consequências
 
@@ -147,4 +201,6 @@ preferível.
 - A aplicação precisa garantir que toda operação de negócio aconteça em transação com o tenant definido.
 - A autorização por objetivo depende da aplicação e dos testes, não da RLS.
 - Este ADR permanece **Proposto** até que a implementação e os testes de RS-01..RS-07 existam e
-  passem; só então seu status pode mudar para **Aceito**, com referência às evidências.
+  passem; só então seu status pode mudar para **Aceito**, com referência às evidências. Situação em
+  P-003: RS-04 (no banco), RS-05, RS-06 e RS-07 têm evidência; RS-01 pela API, RS-02, RS-03 e o
+  lookup de login ainda faltam.

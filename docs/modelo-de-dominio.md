@@ -1,8 +1,8 @@
 # Modelo de domínio
 
-> **Status:** versão conceitual inicial (P-001, 2026-10-21).
-> Colunas físicas, índices, constraints e policies serão definidos nas migrations durante a
-> implementação, respeitando as invariantes abaixo e o [ADR-0001](adr/0001-estrategia-multitenant.md).
+> **Status:** versão conceitual (P-001, 2026-10-21). O esquema físico correspondente foi criado em
+> P-003 nas migrations `backend/src/main/resources/db/migration/V1..V3`, respeitando as invariantes
+> abaixo e o [ADR-0001](adr/0001-estrategia-multitenant.md). Entidade JPA mapeada até agora: `Goal`.
 
 ## 1. Glossário
 
@@ -102,7 +102,7 @@ erDiagram
 
 | Atributo | Descrição |
 |---|---|
-| `id`, `familyId`, `contributionId` | No máximo um estorno por contribuição. |
+| `id`, `familyId`, `contributionId` | No máximo um estorno por contribuição (D-13). |
 | `reversedById` | Autor do estorno. |
 | `reason` | Motivo obrigatório. |
 | `reversedAt` | Momento do estorno. |

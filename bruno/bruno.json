@@ -1,0 +1,6 @@
+{
+  "version": "1",
+  "name": "Vesta",
+  "type": "collection",
+  "ignore": ["node_modules", ".git"]
+}

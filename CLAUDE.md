@@ -1,6 +1,6 @@
 # CLAUDE.md — instruções persistentes do projeto
 
-POC de SaaS financeiro multitenant para famílias. Antes de qualquer tarefa, consulte:
+**Vesta**: POC de SaaS financeiro multitenant para famílias. Antes de qualquer tarefa, consulte:
 
 - [docs/requisitos.md](docs/requisitos.md) — requisitos, critérios de aceitação, matriz de permissões e política de erros.
 - [docs/modelo-de-dominio.md](docs/modelo-de-dominio.md) — glossário, entidades, invariantes e cálculos.
@@ -17,9 +17,20 @@ POC de SaaS financeiro multitenant para famílias. Antes de qualquer tarefa, con
 
 ## Stack (DT-01)
 
-Monorepo; backend Java + Spring Boot 3; PostgreSQL; Flyway; frontend React + Vite + TypeScript;
+Monorepo; backend Java 21 + Spring Boot 4.1.1 (Hibernate 7); Maven 3.10.0 via wrapper;
+PostgreSQL 18.6 (somente Docker); Flyway; Testcontainers; frontend React + Vite + TypeScript;
 Docker Compose para execução local; Bruno para requisições e cenários. Não troque componentes da
-stack sem razão técnica relevante registrada em ADR.
+stack sem razão técnica relevante registrada em ADR. Pacote base: `com.vesta`.
+
+## Estrutura e comandos
+
+- `backend/` (Spring Boot), `infra/postgres/init/` (roles), `bruno/`, `docs/`, `docker-compose.yml`.
+- Testes: `cd backend && ./mvnw verify` (exige Docker rodando e JDK 21 ativo na sessão).
+- Ambiente: `docker compose up -d --build` (exige `.env`, copiado de `.env.example`).
+- Não instale nem altere JDK, Maven ou variáveis globais (`JAVA_HOME`, `PATH`) da máquina; ative o
+  JDK 21 apenas na sessão do comando (ver `docs/setup-local.md`).
+- Migrations novas: toda tabela de negócio precisa de `family_id`, FKs compostas, RLS forçada,
+  policy e grants mínimos para `app_user`. O `DatabaseSecurityTest` falha se faltar RLS.
 
 ## Regras de segurança (não negociáveis)
 
