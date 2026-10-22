@@ -1,0 +1,23 @@
+meta {
+  name: Me com token adulterado
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}x
+}
+
+assert {
+  res.status: eq 401
+}
+
+docs {
+  Cenário N-8: assinatura alterada (um caractere a mais), 401.
+}
