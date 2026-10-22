@@ -22,6 +22,13 @@ spring:
     hibernate:
       ddl-auto: validate
 
+vesta:
+  jwt:
+    # HS256 signing secret, at least 32 bytes (ADR-0002). JWT_SECRET comes from .env or the environment.
+    secret: ${JWT_SECRET:}
+    ttl: 60m
+    issuer: vesta
+
 management:
   endpoints:
     web:
