@@ -31,6 +31,12 @@ stack sem razão técnica relevante registrada em ADR. Pacote base: `com.vesta`.
   JDK 21 apenas na sessão do comando (ver `docs/setup-local.md`).
 - Migrations novas: toda tabela de negócio precisa de `family_id`, FKs compostas, RLS forçada,
   policy e grants mínimos para `app_user`. O `DatabaseSecurityTest` falha se faltar RLS.
+- Dados de demonstração: `db/seed/R__demo_families.sql`, aplicado só com o perfil `local` (Compose
+  e IDE). Senha demo `vesta-demo`. Testes não usam o perfil `local`, salvo `DemoDataIntegrationTest`.
+- Testes não podem depender do `.env`: toda propriedade necessária é definida em
+  `PostgresIntegrationTest` (`@DynamicPropertySource`).
+- Mudanças no script de roles (`infra/postgres/init`) só valem em volume novo: documente a
+  necessidade de `docker compose down -v`.
 
 ## Regras de segurança (não negociáveis)
 
@@ -40,6 +46,10 @@ stack sem razão técnica relevante registrada em ADR. Pacote base: `com.vesta`.
 - O tenant do banco é definido apenas com `set_config('app.tenant_id', ..., true)` dentro da
   transação; nunca use `SET` de sessão.
 - A aplicação conecta com uma role sem superuser e sem BYPASSRLS; o Flyway usa outra role.
+- Não crie funções `SECURITY DEFINER` nem roles com BYPASSRLS além de `find_login_credentials` /
+  `app_auth` (ADR-0001, seção 7) sem decisão registrada; o `DatabaseSecurityTest` mantém a lista.
+- Rotas novas exigem token por padrão (`SecurityConfiguration`); só login e health são públicos.
+  O usuário corrente vem do `sub` do JWT, nunca de parâmetros.
 - Autorização sempre no backend. Respostas: 404 para inexistente/outra família/sem leitura;
   403 quando o usuário vê o recurso mas não tem permissão (D-09).
 - Listagens e totais aplicam o mesmo filtro de acesso do detalhe.
