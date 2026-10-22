@@ -243,7 +243,7 @@ Padrões adotados provisoriamente; detalhes em [decisoes-de-negocio.md](decisoes
 - PV-02 Transições de status, incluindo desarquivar (ARQUIVADO → ATIVO).
 - PV-03 Arquivados ocultos por padrão e visíveis por filtro.
 - PV-04 Data da contribuição informada pelo usuário e não futura.
-- PV-05 Estorno como registro próprio, um por contribuição.
+- ~~PV-05~~ Estorno como registro próprio, um por contribuição: **confirmado em P-003 (D-13)**.
 - PV-06 Edição dos dados do objetivo apenas em status ATIVO.
 - PV-07 Quais fluxos além dos obrigatórios terão tela (RF-07).
 
@@ -254,7 +254,7 @@ Padrões adotados provisoriamente; detalhes em [decisoes-de-negocio.md](decisoes
 | RF-01 | DT-04, D-11 |
 | RF-02 | D-04, D-08, D-12 |
 | RF-03 | D-01, D-05, D-06, D-07 |
-| RF-04 | D-02, D-03, D-05, D-07, D-12 |
+| RF-04 | D-02, D-03, D-05, D-07, D-12, D-13 |
 | RF-05 | DT-04 |
 | RF-07 | D-10 |
 | RS-01..RS-07 | DT-02, DT-03, DT-04, DT-05, D-09, D-10 |

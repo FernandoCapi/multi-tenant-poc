@@ -2,8 +2,8 @@
 
 > Registro das decisões de negócio da POC. Cada decisão indica a origem (lote de perguntas do
 > levantamento P-001) e se a recomendação inicial da IA foi aceita.
-> As decisões técnicas iniciais (DT-01..DT-06) estão no prompt P-001 ([histórico](ia/historico-de-prompts.md))
-> e a estratégia de tenant no [ADR-0001](adr/0001-estrategia-multitenant.md).
+> As decisões técnicas iniciais (DT-01..DT-06) estão no prompt P-001 ([histórico](ia/historico-de-prompts.md)),
+> suas alterações nas entradas T-xx e a estratégia de tenant no [ADR-0001](adr/0001-estrategia-multitenant.md).
 
 ## Resumo
 
@@ -21,7 +21,10 @@
 | D-10 | Cenários negativos demonstrados ao vivo | P-001, lote 3 | Sem recomendação (escolha múltipla) |
 | D-11 | Famílias e membros somente por seeds | P-001, lote 3 | Aceita |
 | D-12 | BRL com centavos; excedente aceito | P-001, lote 3 | Aceita |
+| D-13 | No máximo um estorno por contribuição, como registro próprio (era PV-05) | P-003 | Aceita |
 | C-01 | Convenção de idioma | P-001, revisão do plano | Definida pelo usuário |
+| C-02 | Nome do projeto: Vesta; pacote `com.vesta` | P-003 | Definida pelo usuário |
+| T-01 | Atualização das versões da stack (DT-01) | P-003 | Definida pelo usuário |
 
 ---
 
@@ -140,6 +143,31 @@
 - **Origem:** definida pelo usuário ao revisar o plano da etapa P-001.
 - **Referência:** glossário em [modelo-de-dominio.md](modelo-de-dominio.md#1-glossário).
 
+## D-13 — No máximo um estorno por contribuição
+
+- **Decisão:** o estorno é um registro próprio (`ContributionReversal`), e cada contribuição tem no
+  máximo um. A contribuição original nunca é alterada.
+- **Origem:** era o padrão provisório PV-05; confirmado pelo usuário em P-003, quando o esquema foi criado.
+- **Garantia no banco:** `UNIQUE (family_id, contribution_id)` em `contribution_reversals`, e a role
+  da aplicação só tem `SELECT`/`INSERT` em contribuições e estornos (ADR-0001).
+
+## C-02 — Nome do projeto e pacote
+
+- **Decisão:** o projeto se chama **Vesta**. Pacote base Java: `com.vesta`; artefato `vesta-backend`;
+  banco `vesta`.
+- **Origem:** definida pelo usuário em P-003.
+
+## T-01 — Versões da stack (altera DT-01)
+
+- **Decisão:** Java 21 (Temurin 21.0.12.1+1), Spring Boot **4.1.1** (Spring Framework 7,
+  Hibernate 7), Maven 3.10.0 via Maven Wrapper e PostgreSQL 18.6 (somente Docker).
+- **Contexto:** a DT-01 citava Spring Boot 3. O usuário preparou o ambiente com versões atuais e
+  definiu Spring Boot 4.1.1. O plano inicial da IA para P-003 previa Spring Boot 3.5 e PostgreSQL 17.
+- **Restrição do ambiente:** a máquina tem outro projeto que depende do Java 17 e do Gradle 8.3
+  globais. JDK 21 e Maven ficam em pastas do usuário e são ativados só na sessão; nada global é
+  alterado (ver [setup local](setup-local.md)).
+- **Origem:** definida pelo usuário em P-003.
+
 ---
 
 ## Itens pendentes de validação
@@ -154,6 +182,6 @@ correspondente.
 | PV-02 | Transições: ATIVO→CONCLUÍDO, CONCLUÍDO→ATIVO, ATIVO/CONCLUÍDO→ARQUIVADO, ARQUIVADO→ATIVO (desarquivar, só dono). | Não houve decisão sobre desarquivar. |
 | PV-03 | Arquivados ocultos por padrão e visíveis por filtro a quem tem acesso. | Detalhe de apresentação. |
 | PV-04 | Data da contribuição informada pelo usuário, não futura; data de registro do servidor separada. | Permite lançar contribuições passadas. |
-| PV-05 | Um estorno por contribuição, como registro próprio; a contribuição original nunca muda. | Reforça a imutabilidade (D-02). |
+| ~~PV-05~~ | **Confirmado em P-003 → D-13.** | — |
 | PV-06 | Dados do objetivo só podem ser editados em status ATIVO. | Evita alterar alvo de objetivo concluído. |
 | PV-07 | Fluxos de interface além dos obrigatórios (estorno, criação/edição, gestão de membros) podem ser demonstrados só pela coleção Bruno. | RF-07 exige apenas login, objetivos, progresso e contribuição. |
