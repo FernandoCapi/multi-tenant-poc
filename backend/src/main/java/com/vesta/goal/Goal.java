@@ -40,12 +40,18 @@ public class Goal {
     @Column(name = "target_amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal targetAmount;
 
+    // Single currency for now (D-12), but loaded from the column by Hibernate through reflection:
+    // the field cannot be final (JPA forbids final persistent fields) nor a local variable.
+    @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal"})
     @Column(nullable = false, length = 3)
     private String currency = DEFAULT_CURRENCY;
 
     @Column(name = "due_date")
     private LocalDate dueDate;
 
+    // Not final: JPA forbids final persistent fields and Hibernate sets it on load. Remove the
+    // suppression once the status transitions (D-08) change this field.
+    @SuppressWarnings("FieldMayBeFinal")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private GoalStatus status = GoalStatus.ACTIVE;
