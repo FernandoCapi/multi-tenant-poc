@@ -57,12 +57,35 @@ docker compose logs backend | grep -i flyway   # migrations V1..V3 aplicadas
 
 Só o banco: `docker compose up -d postgres`.
 
-Para rodar o backend fora do Docker, com o banco do Compose:
+### Backend fora do Docker (IDE ou terminal)
+
+Fora do Docker, o backend lê as senhas do `.env` da raiz do repositório. Funciona tanto com a raiz
+quanto com `backend/` como diretório de trabalho, então não é preciso configurar variáveis de
+ambiente na IDE.
 
 ```bash
+docker compose up -d postgres     # só o banco; ou pare o backend do Compose: docker compose stop backend
 cd backend
-DB_APP_PASSWORD=app-user-dev DB_OWNER_PASSWORD=app-owner-dev ./mvnw spring-boot:run
+./mvnw spring-boot:run
 ```
+
+No IntelliJ, basta executar `VestaBackendApplication`. Se o container `backend` estiver rodando,
+ele ocupa a porta 8080: pare-o ou defina `SERVER_PORT=8081` na Run Configuration.
+
+Como as propriedades são resolvidas:
+
+| Propriedade | Ordem de busca | Padrão |
+|---|---|---|
+| Usuário da aplicação | `DB_APP_USER` | `app_user` |
+| Senha da aplicação | `DB_APP_PASSWORD` → `APP_USER_PASSWORD` (do `.env`) | vazio |
+| Usuário do Flyway | `DB_OWNER_USER` | `app_owner` |
+| Senha do Flyway | `DB_OWNER_PASSWORD` → `APP_OWNER_PASSWORD` (do `.env`) | vazio |
+| URL | `DB_URL` | `jdbc:postgresql://localhost:5432/vesta` |
+
+Variáveis de ambiente reais têm precedência sobre o `.env`; é assim que o Docker Compose configura
+o container. As variáveis `POSTGRES_*` não são lidas pelo backend: elas servem só para criar o
+banco na imagem do Postgres. Nunca configure a aplicação para conectar como `app_owner` ou como
+superusuário, porque isso desligaria proteções do ADR-0001.
 
 ## Testes
 
@@ -109,5 +132,6 @@ npx -y @usebruno/cli@4.3.0 run --env local
 |---|---|---|
 | Testes falham com erro de conexão ao Docker | Docker Desktop parado | Iniciar o Docker e repetir. |
 | `password authentication failed for user "app_user"` | O volume foi criado com outras senhas; o script de roles roda só na primeira inicialização | `docker compose down -v` (apaga os dados locais) e `docker compose up -d`. |
+| `The server requested SCRAM-based authentication, but the password is an empty string` | O backend não encontrou a senha: falta o `.env` na raiz do repositório, ou a IDE usa outro diretório de trabalho | Criar o `.env` (`cp .env.example .env`) e usar a raiz ou `backend/` como diretório de trabalho, ou definir `DB_APP_PASSWORD`/`DB_OWNER_PASSWORD`. |
 | `java -version` mostra 8 ou 17 | JDK 21 não ativado neste terminal | Ativar o JDK 21 na sessão (seção acima). |
 | Porta 5432 ou 8080 ocupada | Outro serviço local | Liberar a porta ou ajustar o mapeamento em `docker-compose.yml`. |
