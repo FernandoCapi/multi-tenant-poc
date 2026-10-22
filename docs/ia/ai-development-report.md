@@ -13,16 +13,17 @@
 | P-003 | 2026-10-22 | Planejamento e implementação da fundação técnica | Monorepo, Compose, esquema com RLS forçada, vínculo do tenant à transação, 31 testes e 3 testes de mutação | [historico-de-prompts.md](historico-de-prompts.md#p-003--fundação-técnica-monorepo-compose-rls-e-testes-de-isolamento), [ADR-0001](../adr/0001-estrategia-multitenant.md#evidências) |
 | P-004 | 2026-10-22 | Ajustes do ambiente local | Branch movida para o repositório local; backend lê o `.env` fora do Docker | [historico-de-prompts.md](historico-de-prompts.md#p-004--ajustes-do-ambiente-local) |
 | P-005 | 2026-10-22 | Análise de avisos de inspeção | Falsos positivos de JPA suprimidos pontualmente, com justificativa | [historico-de-prompts.md](historico-de-prompts.md#p-005--avisos-de-inspeção-na-entidade-goal) |
+| P-006 | 2026-10-22 | Roadmap P-006..P-010 e autenticação | Login JWT, lookup `SECURITY DEFINER`, tenant do token, `/api/me`, seeds, 56 testes, Bruno `auth/` | [historico-de-prompts.md](historico-de-prompts.md#p-006--roadmap-e-autenticação), [ADR-0002](../adr/0002-autenticacao-jwt.md) |
 
 ## Indicadores acumulados
 
 | Indicador | Valor | Observação |
 |---|---|---|
-| Etapas registradas | 5 | P-001..P-005 |
-| Recomendações da IA decididas | 17 | 16 aceitas, 1 não adotada ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
+| Etapas registradas | 6 | P-001..P-006 |
+| Recomendações da IA decididas | 21 | 20 aceitas, 1 não adotada ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
 | Sugestões incorretas evidenciadas | 1 | SI-001 ([sugestoes-incorretas.md](sugestoes-incorretas.md)) |
-| Linhas de código produzidas | ≈ 1.090 | Até P-003: Java de produção 295, Java de teste 594, SQL 173, shell 30 (`wc -l`, inclui linhas em branco e comentários) |
-| Testes automatizados | 31 | Todos passando em 2026-10-22 (`./mvnw verify`) |
+| Linhas de código produzidas | ≈ 2.620 | Até P-006: Java de produção 935, Java de teste 1.146, SQL 295 (migrations e seed), shell 36, Bruno 211 (`wc -l`, inclui linhas em branco e comentários) |
+| Testes automatizados | 56 | Todos passando em 2026-10-22 (`./mvnw test`), inclusive sem `.env` |
 
 ---
 
@@ -152,3 +153,57 @@ As alterações das mutações foram desfeitas; o arquivo restaurado foi compara
 - **Observação:** a mensagem de erro não indicava quais variáveis o backend lê, e o guia de setup
   só mencionava as variáveis no comando de terminal. O guia agora traz uma tabela de resolução das
   propriedades e uma entrada de solução de problemas para esse erro.
+
+---
+
+## P-006 — Roadmap e autenticação (2026-10-22)
+
+**Ferramenta:** Claude Code, modelo Claude Opus 5.5.
+
+### O que a IA fez
+
+- Propôs o roadmap P-006..P-010 e fez 4 perguntas; as 4 recomendações foram aceitas.
+- Confirmou nos metadados do Initializr e nos jars os nomes de starters e pacotes do Boot 4.1.1
+  (security, resource server, `AutoConfigureMockMvc`).
+- Gerou os hashes bcrypt de teste e de demonstração com o próprio encoder do Spring.
+- Implementou:
+  - role `app_auth` e a migration V4 (hash de senha, privilégio por coluna, função de lookup);
+  - login com JWT HS256 e validação de `sub`/`family_id`;
+  - `TenantContextFilter`, entidades `User`/`Family` e o endpoint `/api/me`;
+  - seeds de duas famílias no perfil `local`;
+  - cenários Bruno de autenticação;
+  - ADR-0002.
+
+### Verificações executadas (saídas lidas)
+
+| Verificação | Resultado |
+|---|---|
+| `./mvnw test` | 56 testes, 0 falhas |
+| `./mvnw test` sem `.env` presente | 42 testes passando no momento da checagem (antes de `/api/me` e seeds); a base de testes define todas as propriedades |
+| Mutação: `app_auth` sem BYPASSRLS | 2 de 6 testes de lookup falharam |
+| Mutação: `TenantContextFilter` não registrado | 2 de 8 testes de `/api/me` falharam |
+| `docker compose down -v && up -d --build` | Healthy; Flyway V1..V4 + seed; login e `/api/me` corretos para as duas famílias; 401 sem token e com senha errada |
+| Backend sem perfil `local` contra banco com seed | Sobe e autentica (padrão `repeatable:missing`) |
+| Bruno CLI 4.3.0 | 8/8 requisições, 17/17 asserções |
+| Comandos `psql` documentados | Executados; saída conforme o guia |
+
+### Problemas encontrados durante a etapa
+
+- **Testes passando pelo motivo errado:** a primeira rodada dos testes de login passou porque o
+  segredo JWT vinha do `.env` local, já que a edição na base de testes não tinha sido aplicada. A
+  IA percebeu o problema na saída da ferramenta, corrigiu e confirmou rodando os testes com o
+  `.env` removido. Regra registrada no `CLAUDE.md`: testes não podem depender do `.env`.
+- **README em UTF-16:** o arquivo estava em UTF-16 desde o primeiro commit do repositório, e as
+  edições anteriores da IA (P-001 e P-003) mantiveram essa codificação sem perceber. Convertido
+  para UTF-8 em commit próprio.
+- **Ambiente Bruno não atualizado:** a primeira execução falhou em 3 requisições porque a edição do
+  ambiente `local.bru` não tinha sido aplicada. Corrigido, e a segunda execução passou.
+- **Edição em `docs/requisitos.md` não aplicada** no primeiro commit de documentação. Detectada,
+  aplicada e incluída no mesmo commit, ainda local, com `--amend`.
+
+### O que não foi feito nesta etapa
+
+- Execução pela IDE do usuário com o perfil `local`: não é possível pela IA. Foram verificadas a
+  execução por `java -jar` sem perfil e a execução no Compose com o perfil.
+- Endpoints de objetivos e contribuições, autorização por objetivo e frontend (P-007 a P-009).
+- Sem push nem PR (não solicitados).
