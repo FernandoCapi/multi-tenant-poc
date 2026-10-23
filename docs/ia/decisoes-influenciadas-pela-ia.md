@@ -45,6 +45,13 @@
 | IA-25 | Dados de demonstração | Flyway em `db/seed` só no perfil `local`, senha demo única com hash no SQL | Aceita | `R__demo_families.sql`, `application-local.yml` | P-006 |
 | IA-26 | Token | HS256, 60 min, sem refresh, emitido e validado pelo backend | Aceita | ADR-0002 | P-006 |
 | IA-27 | Detalhes de implementação | Privilégio por coluna em `users` (sem `password_hash` para `app_user`); hash fictício para equalizar tempo de login; validação de `sub`/`family_id` no decoder; `ignore-migration-patterns` para bancos com seed; teste de catálogo de funções `SECURITY DEFINER`; conversão do README para UTF-8 | Aceita (plano aprovado; a conversão foi decisão da IA durante a implementação) | Implementado | P-006 |
+| IA-28 | PV-02 | Transições com desarquivar | Aceita | D-14 | P-007 |
+| IA-29 | PV-03 | Arquivados ocultos por padrão, com filtro | Aceita | D-15 | P-007 |
+| IA-30 | PV-06 | Edição só em ATIVO | Aceita | D-16 | P-007 |
+| IA-31 | Escopo da P-007 | Progresso financeiro só leitura já na P-007 | Aceita | Plano da P-007 | P-007 |
+| IA-32 | Detalhes de implementação | `GoalAccessService` (404 → 403 → 422 → 409, com validação do corpo depois do acesso); lock pessimista para o invariante do último dono; lock otimista (`version`); totais só para objetivos listados; `familyId` do corpo ignorado | Aceita (plano aprovado) | Implementado | P-007 |
+| IA-33 | Porta do Postgres | Não alterar o container de outro projeto que ocupa a 5432; tornar a porta configurável (`POSTGRES_PORT`) | Decisão da IA durante a implementação | `docker-compose.yml`, `application.yml` | P-007 |
+| IA-34 | Verificação do plano | O plano dizia que Carlos veria 4 objetivos nos dados demo | Incorreta | Ver SI-002 | P-007 |
 
 ## Observações
 

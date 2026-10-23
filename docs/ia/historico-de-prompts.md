@@ -14,6 +14,7 @@
 | P-004 | 2026-10-22 | Ajustes do ambiente local: repositório local, credenciais e leitura do `.env` | `backend/src/main/resources/application.yml`, `docs/setup-local.md` |
 | P-005 | 2026-10-22 | Avisos de inspeção na entidade `Goal` | `backend/src/main/java/com/vesta/goal/Goal.java` |
 | P-006 | 2026-10-22 | Planejamento das próximas etapas e implementação da autenticação, do tenant vindo do JWT e dos seeds | `backend/` (auth, tenant, user, family, V4, seed), `infra/postgres/init`, `bruno/auth`, ADR-0001, ADR-0002, `docs/setup-local.md`, README |
+| P-007 | 2026-10-23 | Objetivos, membros, autorização por objetivo e progresso (só leitura) | `backend/` (goal, family, V5), `bruno/goals`, `docker-compose.yml` (porta configurável), decisões D-14..D-16, ADR-0001, README, setup |
 
 ---
 
@@ -438,3 +439,44 @@ Não existe branch `plan`; a IA interpretou como `main` e disse isso ao usuário
 - Implementação em 9 commits (o planejado, com o commit de dependências unido ao de autenticação,
   mais a conversão do README para UTF-8). 56 testes passando, testes de mutação, ambiente Compose
   recriado e coleção Bruno `auth/` (8/8 requisições).
+
+---
+
+## P-007 — Objetivos, membros e autorização por objetivo
+
+- **Data:** 2026-10-23
+- **Ferramenta/modelo:** Claude Code, modelo Claude Opus 5.5. Planejamento em plan mode, implementação após aprovação.
+- **Branch:** `feat/p-007-objetivos`, criada a partir da `main` (`00ad265`, merge do PR #3) no repositório local.
+
+### Prompts
+
+```text
+Mudanças implementadas na main.
+Crie a próxima branch e planeje os próximos passos
+```
+
+Durante a implementação o usuário interrompeu a sessão e depois pediu:
+
+```text
+continue de onde foi parado
+```
+
+O trabalho foi retomado no ponto em que estava: a atualização da documentação.
+
+### Respostas do usuário (todas as recomendações da IA)
+
+| Pergunta | Resposta |
+|---|---|
+| PV-02 — transições | Com desarquivar → D-14 |
+| PV-03 — arquivados na listagem | Ocultos, com filtro → D-15 |
+| PV-06 — edição | Só em ATIVO → D-16 |
+| Progresso na P-007 | Sim, só leitura |
+
+### Resultado
+
+- API de objetivos e membros com autorização por objetivo (404/403), transições, exclusão,
+  lock otimista e pessimista, progresso financeiro e total por membro.
+- 121 testes passando; 4 testes de mutação; ambiente Compose e coleção Bruno (23/23 requisições,
+  repetível) verificados.
+- A porta 5432 estava ocupada por um banco de outro projeto do usuário. A IA não mexeu nele e tornou
+  a porta do Vesta configurável (`POSTGRES_PORT`, padrão 5432; 5433 neste ambiente).

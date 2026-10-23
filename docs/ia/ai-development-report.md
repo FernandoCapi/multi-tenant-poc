@@ -14,16 +14,17 @@
 | P-004 | 2026-10-22 | Ajustes do ambiente local | Branch movida para o repositório local; backend lê o `.env` fora do Docker | [historico-de-prompts.md](historico-de-prompts.md#p-004--ajustes-do-ambiente-local) |
 | P-005 | 2026-10-22 | Análise de avisos de inspeção | Falsos positivos de JPA suprimidos pontualmente, com justificativa | [historico-de-prompts.md](historico-de-prompts.md#p-005--avisos-de-inspeção-na-entidade-goal) |
 | P-006 | 2026-10-22 | Roadmap P-006..P-010 e autenticação | Login JWT, lookup `SECURITY DEFINER`, tenant do token, `/api/me`, seeds, 56 testes, Bruno `auth/` | [historico-de-prompts.md](historico-de-prompts.md#p-006--roadmap-e-autenticação), [ADR-0002](../adr/0002-autenticacao-jwt.md) |
+| P-007 | 2026-10-23 | Objetivos, membros, autorização por objetivo e progresso | API de objetivos/membros, 404/403, lock otimista/pessimista, progresso, 121 testes, Bruno `goals/` | [historico-de-prompts.md](historico-de-prompts.md#p-007--objetivos-membros-e-autorização-por-objetivo), [ADR-0001](../adr/0001-estrategia-multitenant.md#evidências-de-p-007) |
 
 ## Indicadores acumulados
 
 | Indicador | Valor | Observação |
 |---|---|---|
-| Etapas registradas | 6 | P-001..P-006 |
-| Recomendações da IA decididas | 21 | 20 aceitas, 1 não adotada ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
-| Sugestões incorretas evidenciadas | 1 | SI-001 ([sugestoes-incorretas.md](sugestoes-incorretas.md)) |
-| Linhas de código produzidas | ≈ 2.620 | Até P-006: Java de produção 935, Java de teste 1.146, SQL 295 (migrations e seed), shell 36, Bruno 211 (`wc -l`, inclui linhas em branco e comentários) |
-| Testes automatizados | 56 | Todos passando em 2026-10-22 (`./mvnw test`), inclusive sem `.env` |
+| Etapas registradas | 7 | P-001..P-007 |
+| Recomendações da IA decididas | 25 | 24 aceitas, 1 não adotada ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
+| Sugestões incorretas evidenciadas | 2 | SI-001, SI-002 ([sugestoes-incorretas.md](sugestoes-incorretas.md)) |
+| Linhas de código produzidas | ≈ 5.090 | Até P-007: Java de produção 2.041, Java de teste 2.095, SQL 298, shell 36, Bruno 616 (`wc -l`, inclui linhas em branco e comentários) |
+| Testes automatizados | 121 | Todos passando em 2026-10-23 (`./mvnw test`) |
 
 ---
 
@@ -206,4 +207,55 @@ As alterações das mutações foram desfeitas; o arquivo restaurado foi compara
 - Execução pela IDE do usuário com o perfil `local`: não é possível pela IA. Foram verificadas a
   execução por `java -jar` sem perfil e a execução no Compose com o perfil.
 - Endpoints de objetivos e contribuições, autorização por objetivo e frontend (P-007 a P-009).
+- Sem push nem PR (não solicitados).
+
+---
+
+## P-007 — Objetivos, membros e autorização por objetivo (2026-10-23)
+
+**Ferramenta:** Claude Code, modelo Claude Opus 5.5.
+
+### O que a IA fez
+
+- Fez 4 perguntas (PV-02, PV-03, PV-06 e o escopo do progresso); as 4 recomendações foram aceitas.
+- Implementou:
+  - V5 (`version`);
+  - domínio do objetivo (transições, `GoalMember`);
+  - `GoalAccessService` (404/403);
+  - API de objetivos e membros;
+  - diretório da família;
+  - progresso financeiro com total por membro;
+  - cenários Bruno de objetivos.
+- Removeu a supressão `FieldMayBeFinal` de `status` em `Goal`, como previsto na P-005, já que as
+  transições agora alteram o campo.
+
+### Verificações executadas (saídas lidas)
+
+| Verificação | Resultado |
+|---|---|
+| `./mvnw test` | 121 testes, 0 falhas |
+| Mutação: `requireOwner` sempre permite | 10 de 27 testes da matriz falharam |
+| Mutação: listagem sem filtro de vínculo | 2 de 8 testes de listagem quebraram (por erro, não asserção) |
+| Mutação: último dono com `< 1` | 1 de 10 testes de membros falhou |
+| Mutação: acumulado sem excluir estornos | 4 de 4 testes de progresso falharam |
+| Compose com dados demo | V5 aplicada; Carlos vê 3 objetivos; Pedro: 404 no Aluguel, 403 ao editar a Viagem; Marcos: 404 na Silva; Viagem = 3.450,00 |
+| Bruno CLI 4.3.0, duas execuções seguidas | 23/23 requisições, 43/43 asserções, 3/3 testes nas duas |
+
+### Problemas encontrados durante a etapa
+
+- **Porta 5432 ocupada** pelo container `docker_svc-db_1`, de outro projeto do usuário. A IA não o
+  parou nem o alterou. Tornou a porta do Postgres configurável (`POSTGRES_PORT`, padrão 5432) e usou
+  5433 no `.env` local.
+- **Expectativa errada no plano** ("Carlos vê 4 objetivos"): registrada como SI-002.
+- **Script de documentação via heredoc** falhou no shell por causa das crases e aspas. Foi refeito
+  como arquivo Python no scratchpad. Nenhuma alteração parcial ficou nos arquivos, porque o script
+  não chegou a rodar.
+- **Sessão interrompida pelo usuário** durante a documentação e retomada com
+  "continue de onde foi parado".
+
+### O que não foi feito nesta etapa
+
+- Teste de concorrência real (dois donos saindo ao mesmo tempo): a proteção é o lock pessimista,
+  sem teste dedicado.
+- Registro e estorno de contribuições, e a restrição "quem não contribui não registra" (P-008).
 - Sem push nem PR (não solicitados).
