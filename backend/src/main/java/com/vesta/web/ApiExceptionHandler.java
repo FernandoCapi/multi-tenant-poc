@@ -17,6 +17,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import com.vesta.auth.InvalidCredentialsException;
 import com.vesta.family.FamilyMemberNotFoundException;
+import com.vesta.goal.GoalMemberNotFoundException;
 import com.vesta.goal.GoalNotFoundException;
 import com.vesta.goal.GoalPermissionDeniedException;
 import com.vesta.goal.GoalStateConflictException;
@@ -46,6 +47,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(GoalNotFoundException.class)
     ProblemDetail handleGoalNotFound() {
         return problem(HttpStatus.NOT_FOUND, "Não encontrado", "Objetivo não encontrado.");
+    }
+
+    @ExceptionHandler(GoalMemberNotFoundException.class)
+    ProblemDetail handleGoalMemberNotFound() {
+        return problem(HttpStatus.NOT_FOUND, "Não encontrado", "Membro não encontrado neste objetivo.");
     }
 
     @ExceptionHandler(FamilyMemberNotFoundException.class)
