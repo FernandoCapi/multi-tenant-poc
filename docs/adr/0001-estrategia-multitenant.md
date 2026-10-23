@@ -3,7 +3,9 @@
 - **Status:** Proposto
 - **Data:** 2026-10-21
 - **Etapa:** P-001 (especificação); complementado em P-003 (2026-10-22) com a implementação e as
-  evidências da fundação — ver [Implementação](#implementação-p-003) e [Evidências](#evidências)
+  evidências da fundação — ver [Implementação](#implementação-p-003) e [Evidências](#evidências);
+  em P-006 (2026-10-22) com o lookup de login e o tenant vindo do JWT
+- **Relacionado:** [ADR-0002 — Autenticação com JWT](0002-autenticacao-jwt.md)
 - **Relacionados:** DT-02, DT-03, DT-04, DT-05; [requisitos](../requisitos.md) RS-01..RS-07; [modelo de domínio](../modelo-de-dominio.md)
 
 ## Contexto
@@ -88,13 +90,36 @@ Superusers sempre ignoram a RLS; por isso a aplicação nunca se conecta como su
 Privilégios de `app_user` (P-003): somente leitura em `families` e `users`; leitura e escrita em
 `goals` e `goal_members`; **somente `SELECT` e `INSERT`** em `contributions` e
 `contribution_reversals`. Assim, a imutabilidade das contribuições (D-02) também é garantida pelo banco.
+Desde P-006, em `users` a leitura é por coluna e exclui `password_hash`.
 
 ### 6. Resolução do tenant: claim no JWT
 
 No login, o servidor busca o usuário, valida a senha e emite um JWT com `sub` (id do usuário) e o
 id da família. Nas requisições seguintes, o `TenantContext` usa a claim, sem consultar o banco.
 
-### 7. Autorização por objetivo
+Implementado em P-006: o decoder rejeita tokens cujo `sub` ou `family_id` não seja um UUID, e o
+`TenantContextFilter`, executado logo após a autenticação bearer, preenche o `TenantContext` com o
+`family_id` do token e o limpa ao fim da requisição. Parâmetros, cabeçalhos e corpos enviados pelo
+cliente nunca definem o tenant. Detalhes do token em [ADR-0002](0002-autenticacao-jwt.md).
+
+### 7. Lookup de login (decidido em P-006)
+
+O login precisa encontrar o usuário pelo e-mail antes de existir tenant, e a RLS de `users`
+esconderia todas as linhas. Decisão: uma única função `SECURITY DEFINER`,
+`find_login_credentials(email)`, que devolve `user_id`, `family_id` e `password_hash` de um e-mail.
+
+- A função pertence a `app_auth`, role `NOLOGIN` com `BYPASSRLS` criada só para isso. `app_auth`
+  só tem `SELECT` nas colunas necessárias de `users`.
+- `search_path` fixo (`public, pg_temp`); `EXECUTE` revogado de `PUBLIC` e concedido só a `app_user`.
+- `app_user` perdeu o `SELECT` em `password_hash`: hashes só saem pela função.
+- `app_owner` recebe `app_auth` com `INHERIT FALSE, SET TRUE`. Assim, o Flyway consegue transferir
+  a posse da função, mas `app_owner` não herda o `BYPASSRLS`. **Risco aceito:** `app_owner` pode executar
+  `SET ROLE app_auth`; ela é usada só por migrations.
+- Alternativa descartada: tabela global de credenciais sem RLS. É mais simples, mas uma injeção de
+  SQL no contexto da aplicação poderia listar e-mails e hashes de todas as famílias, e o teste de
+  catálogo precisaria de exceção.
+
+### 8. Autorização por objetivo
 
 A RLS garante o isolamento **entre famílias**. O controle **por objetivo** (DONO/MEMBRO, `contribui`)
 fica na camada de aplicação, coberto por testes automatizados (RS-02). Listagens e agregações
@@ -145,12 +170,12 @@ deles já foram executados.
 
 | Risco | Mitigação proposta | Validação |
 |---|---|---|
-| **Login antes do tenant:** a busca do usuário por e-mail acontece sem `app.tenant_id`, e a RLS bloquearia a leitura. | A definir na implementação. Opções: (a) tabela global de credenciais sem RLS, contendo só e-mail, hash, `user_id` e `family_id`; (b) função `SECURITY DEFINER` restrita a esse lookup. A opção (a) é a mais simples; a escolha será registrada neste ADR. | Teste de login e teste de que a tabela de credenciais não expõe dados de negócio. |
+| **Login antes do tenant:** a busca do usuário por e-mail acontece sem `app.tenant_id`, e a RLS bloquearia a leitura. | Função `SECURITY DEFINER` pertencente a `app_auth` (seção 7). | Lookup sem tenant, `app_user` sem acesso a hashes, atributos da função e da role. **Feito em P-006.** |
 | **Pool de conexões:** um `SET` de sessão vazaria o tenant para a próxima requisição que usar a mesma conexão. | Usar apenas `set_config(..., true)` dentro da transação; nunca `SET` de sessão. | Teste de requisições sucessivas de tenants diferentes na mesma conexão (RS-07). **Feito em P-003.** |
 | **Acesso fora de transação:** sem transação, a configuração local não se aplica. | Toda operação de negócio dentro de transação; `spring.jpa.open-in-view=false`; leituras lazy fora da transação falham fechadas por causa da RLS. | Teste de consulta sem contexto retornando zero linhas (RS-06). **Feito em P-003.** |
 | **Dono das tabelas ignora a RLS sem `FORCE`.** | `FORCE ROW LEVEL SECURITY`; `app_user` não é dona das tabelas. | Teste executando consulta sem `WHERE` com `app_user` (RS-05). **Feito em P-003.** |
 | **Uso acidental de superuser ou role com BYPASSRLS.** | Credenciais separadas para Flyway e aplicação; checagem dos atributos da role. | Teste ou verificação que confirme `rolsuper = false` e `rolbypassrls = false` para `app_user`. **Feito em P-003.** |
-| **Escrita com `family_id` de outro tenant.** | `WITH CHECK` na policy, `family_id` vindo só do `TenantContext` e FKs compostas. | Teste com `family_id` forjado (N-2). **Feito no banco em P-003**; pela API, na etapa de endpoints. |
+| **Escrita com `family_id` de outro tenant.** | `WITH CHECK` na policy, `family_id` vindo só do `TenantContext` e FKs compostas. | Teste com `family_id` forjado (N-2). **Feito no banco em P-003**; pela API em P-006 (`family_id` em query e cabeçalho ignorado em `/api/me`); falta nos endpoints de escrita (P-007/P-008). |
 | **Claim de tenant desatualizada no JWT.** | Expiração curta; risco baixo sem troca de família. | Documentado; sem teste específico na POC. |
 
 ## Implementação (P-003)
@@ -166,8 +191,16 @@ deles já foram executados.
 | `set_config('app.tenant_id', ?, true)` no início de cada transação | `TenantAwareJpaTransactionManager.java`: estende `JpaTransactionManager` e substitui o gerenciador de transações padrão. Se a definição do tenant falhar, a transação é desfeita e não é entregue. |
 | Configuração | `application.yml`: datasource `app_user`, Flyway `app_owner`, `open-in-view=false`, `ddl-auto=validate` |
 
-Ainda não implementado: preenchimento do `TenantContext` a partir do JWT (etapa de autenticação),
-lookup de login (risco em aberto abaixo) e autorização por objetivo.
+Implementado em P-006:
+
+| Elemento | Onde |
+|---|---|
+| Role `app_auth` (NOLOGIN, BYPASSRLS) | `infra/postgres/init/01-create-roles.sh` |
+| `password_hash`, privilégio por coluna e `find_login_credentials` | `V4__add_login_credentials.sql` |
+| `TenantContext` preenchido pelo JWT | `TenantContextFilter.java`, registrado em `auth/SecurityConfiguration.java` |
+| Validação de `sub` e `family_id` no token | `auth/VestaTokenValidator.java` |
+
+Ainda não implementado: autorização por objetivo (P-007).
 
 ## Evidências
 
@@ -194,6 +227,28 @@ testes detectam a ausência de cada proteção:
 tenant; `alter table goals disable row level security` como `app_user` falha com
 `must be owner of table goals`.
 
+### Evidências de P-006
+
+**Suíte `./mvnw test`:** 56 testes, 0 falhas. Os testes passam sem `.env` presente.
+
+| Classe (nova ou alterada) | Testes | Cobre |
+|---|---|---|
+| `LoginCredentialsDatabaseTest` | 6 | Lookup sem tenant e sem diferenciar maiúsculas; e-mail inexistente sem resultado; `app_user` não lê `password_hash` (42501); função `SECURITY DEFINER` com `search_path` fixo, dona `app_auth` (NOLOGIN, BYPASSRLS); só `app_user` executa; `app_owner` não herda o bypass. |
+| `DatabaseSecurityTest` | 5 | Novo: toda função `SECURITY DEFINER` está em lista explícita e fixa o `search_path`. |
+| `MeIntegrationTest` | 8 | Token do login dá acesso ao usuário e à família dele; `family_id` em query e cabeçalho ignorado (N-2); sem token, expirado, adulterado, assinado com outra chave, sem `family_id` → 401 (N-8); token que combina usuário de A com família de B → 401. |
+| `TenantContextFilterTest` | 3 | Tenant do token visível só durante a requisição; limpo mesmo com exceção; tenant residual descartado em requisição anônima. |
+
+**Testes de mutação** (desfeitos, sem commit):
+
+| Alteração | Resultado |
+|---|---|
+| `app_auth` sem `BYPASSRLS` | 2 de 6 testes de `LoginCredentialsDatabaseTest` falharam (lookup e atributos da role). |
+| `TenantContextFilter` não registrado | 2 de 8 testes de `MeIntegrationTest` falharam: os acessos válidos deixam de enxergar o usuário. |
+
+**Ambiente Compose** (volume recriado): Flyway aplicou V1..V4 e o seed com o perfil `local`;
+login e `/api/me` corretos para usuários das duas famílias; sem token → 401; senha errada → 401 com
+mensagem genérica. O backend também sobe **sem** o perfil `local` contra o banco já com seed.
+
 ## Consequências
 
 - O isolamento entre famílias depende de três camadas independentes (aplicação, persistência, RLS) e
@@ -203,4 +258,5 @@ tenant; `alter table goals disable row level security` como `app_user` falha com
 - Este ADR permanece **Proposto** até que a implementação e os testes de RS-01..RS-07 existam e
   passem; só então seu status pode mudar para **Aceito**, com referência às evidências. Situação em
   P-003: RS-04 (no banco), RS-05, RS-06 e RS-07 têm evidência; RS-01 pela API, RS-02, RS-03 e o
-  lookup de login ainda faltam.
+  lookup de login ainda faltam. Situação em P-006: RS-03 e o lookup de login têm evidência, e RS-04
+  também pela API em `/api/me`. Faltam RS-01 pela API nos endpoints de objetivos e contribuições, e RS-02.

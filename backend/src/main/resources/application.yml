@@ -17,10 +17,20 @@ spring:
     # Schema owner role, used only for migrations
     user: ${DB_OWNER_USER:app_owner}
     password: ${DB_OWNER_PASSWORD:${APP_OWNER_PASSWORD:}}
+    # A database seeded with the "local" profile must still start without it: the demo data is
+    # a repeatable migration that is simply not on the path then
+    ignore-migration-patterns: "*:future,repeatable:missing"
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: validate
+
+vesta:
+  jwt:
+    # HS256 signing secret, at least 32 bytes (ADR-0002). JWT_SECRET comes from .env or the environment.
+    secret: ${JWT_SECRET:}
+    ttl: 60m
+    issuer: vesta
 
 management:
   endpoints:

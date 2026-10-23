@@ -13,6 +13,7 @@
 | P-003 | 2026-10-22 | Estrutura do monorepo, Docker Compose, banco com RLS e primeiros testes de isolamento | `backend/`, `infra/`, `bruno/`, `docker-compose.yml`, `docs/setup-local.md`, ADR-0001 (complemento), commits na branch `feat/p-003-fundacao-rls` |
 | P-004 | 2026-10-22 | Ajustes do ambiente local: repositório local, credenciais e leitura do `.env` | `backend/src/main/resources/application.yml`, `docs/setup-local.md` |
 | P-005 | 2026-10-22 | Avisos de inspeção na entidade `Goal` | `backend/src/main/java/com/vesta/goal/Goal.java` |
+| P-006 | 2026-10-22 | Planejamento das próximas etapas e implementação da autenticação, do tenant vindo do JWT e dos seeds | `backend/` (auth, tenant, user, family, V4, seed), `infra/postgres/init`, `bruno/auth`, ADR-0001, ADR-0002, `docs/setup-local.md`, README |
 
 ---
 
@@ -403,3 +404,37 @@ Para subir o banco:
 - **Resultado:** `@SuppressWarnings` só nos dois campos, com comentário justificando; a supressão em
   `status` deve sair quando as transições de status (D-08) forem implementadas. O espaçamento
   alterado acidentalmente no arquivo local foi normalizado. `./mvnw verify`: 31 testes passando.
+
+---
+
+## P-006 — Roadmap e autenticação
+
+- **Data:** 2026-10-22
+- **Ferramenta/modelo:** Claude Code, modelo Claude Opus 5.5. Planejamento em plan mode, implementação após aprovação.
+- **Branch:** `feat/p-006-autenticacao`, criada a partir da `main` (`c7c8869`, merge do PR #2) no repositório local.
+
+### Prompt
+
+```text
+A branch foi mergeada na main.
+Crie uma nova branch a partir da plan, e planeje os próximos passos
+```
+
+Não existe branch `plan`; a IA interpretou como `main` e disse isso ao usuário.
+
+### Respostas do usuário (todas as recomendações da IA)
+
+| Pergunta | Resposta |
+|---|---|
+| Lookup de login | Função `SECURITY DEFINER` com role dedicada |
+| Escopo da P-006 | Auth + seeds + `/api/me` |
+| Dados de demonstração | Flyway só no perfil `local` |
+| Token | HS256, 60 min, sem refresh |
+
+### Resultado
+
+- Roadmap: P-006 autenticação → P-007 objetivos e autorização por objetivo → P-008 contribuições
+  → P-009 frontend → P-010 consolidação.
+- Implementação em 9 commits (o planejado, com o commit de dependências unido ao de autenticação,
+  mais a conversão do README para UTF-8). 56 testes passando, testes de mutação, ambiente Compose
+  recriado e coleção Bruno `auth/` (8/8 requisições).

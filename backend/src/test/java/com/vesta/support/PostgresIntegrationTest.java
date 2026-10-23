@@ -24,6 +24,7 @@ public abstract class PostgresIntegrationTest {
     protected static final String APP_USER_PASSWORD = "app-user-test";
     protected static final String APP_OWNER = "app_owner";
     protected static final String APP_OWNER_PASSWORD = "app-owner-test";
+    protected static final String JWT_SECRET = "vesta-test-secret-with-at-least-32-bytes";
 
     private static final String SET_TENANT_SQL = "select set_config('app.tenant_id', ?, true)";
 
@@ -48,6 +49,8 @@ public abstract class PostgresIntegrationTest {
         registry.add("spring.datasource.password", () -> APP_USER_PASSWORD);
         registry.add("spring.flyway.user", () -> APP_OWNER);
         registry.add("spring.flyway.password", () -> APP_OWNER_PASSWORD);
+        // Tests must not depend on the developer's .env
+        registry.add("vesta.jwt.secret", () -> JWT_SECRET);
     }
 
     protected static Connection connectAsAppUser() throws SQLException {

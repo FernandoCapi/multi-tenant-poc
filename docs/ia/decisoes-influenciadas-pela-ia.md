@@ -40,6 +40,11 @@
 | IA-20 | Vínculo do tenant à transação | Estender `JpaTransactionManager` e aplicar `set_config` no `doBegin`; UUID nulo como sentinela no Hibernate; teste de catálogo exigindo RLS em toda tabela; testes de mutação | Aceita (plano aprovado) | Implementado; evidências no ADR-0001 | P-003 |
 | IA-21 | Configuração local | Fazer o backend ler o `.env` da raiz quando roda fora do Docker, mapeando `APP_USER_PASSWORD`/`APP_OWNER_PASSWORD` como fallback | Aceita | Implementado em `application.yml` | P-004 |
 | IA-22 | Avisos de inspeção em `Goal` | Não tornar `final` nem local campos persistentes (a JPA proíbe e o Hibernate os preenche por reflexão); supressão pontual com justificativa | Aceita | `@SuppressWarnings` em `currency` e `status` | P-005 |
+| IA-23 | Lookup de login | Função `SECURITY DEFINER` com dona `app_auth` (NOLOGIN, BYPASSRLS), em vez de tabela global de credenciais | Aceita | ADR-0001, seção 7 | P-006 |
+| IA-24 | Escopo da P-006 | Auth + seeds + `/api/me`; objetivos na P-007 (roadmap P-006..P-010) | Aceita | Plano da P-006 | P-006 |
+| IA-25 | Dados de demonstração | Flyway em `db/seed` só no perfil `local`, senha demo única com hash no SQL | Aceita | `R__demo_families.sql`, `application-local.yml` | P-006 |
+| IA-26 | Token | HS256, 60 min, sem refresh, emitido e validado pelo backend | Aceita | ADR-0002 | P-006 |
+| IA-27 | Detalhes de implementação | Privilégio por coluna em `users` (sem `password_hash` para `app_user`); hash fictício para equalizar tempo de login; validação de `sub`/`family_id` no decoder; `ignore-migration-patterns` para bancos com seed; teste de catálogo de funções `SECURITY DEFINER`; conversão do README para UTF-8 | Aceita (plano aprovado; a conversão foi decisão da IA durante a implementação) | Implementado | P-006 |
 
 ## Observações
 

@@ -1,0 +1,25 @@
+meta {
+  name: Me
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.email: eq {{email}}
+  res.body.family.name: eq "Família Silva"
+}
+
+docs {
+  Usuário e família lidos com a família do token (RLS); depende do Login.
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Me com family_id forjado
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/me?family_id=b0000000-0000-0000-0000-000000000001
+  body: none
+  auth: bearer
+}
+
+params:query {
+  family_id: b0000000-0000-0000-0000-000000000001
+}
+
+headers {
+  X-Family-Id: b0000000-0000-0000-0000-000000000001
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.family.name: eq "Família Silva"
+}
+
+docs {
+  Cenário N-2: o family_id da Família Souza enviado pelo cliente (query e cabeçalho) é ignorado; vale só o do token.
+}

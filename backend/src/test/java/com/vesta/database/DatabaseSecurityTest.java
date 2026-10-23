@@ -78,6 +78,30 @@ class DatabaseSecurityTest extends PostgresIntegrationTest {
     }
 
     @Test
+    void securityDefinerFunctionsAreAllowlistedAndPinTheirSearchPath() throws SQLException {
+        List<String> definers = new ArrayList<>();
+        try (Connection connection = connectAsOwner();
+             Statement statement = connection.createStatement();
+             ResultSet rows = statement.executeQuery("""
+                     select p.proname, array_to_string(p.proconfig, ',') as config
+                       from pg_proc p
+                       join pg_namespace n on n.oid = p.pronamespace
+                      where n.nspname = 'public'
+                        and p.prosecdef
+                     """)) {
+            while (rows.next()) {
+                definers.add(rows.getString("proname"));
+                assertThat(rows.getString("config"))
+                        .as("search_path of %s", rows.getString("proname"))
+                        .contains("search_path=");
+            }
+        }
+
+        // Each SECURITY DEFINER function bypasses the caller's privileges: add one only with a review
+        assertThat(definers).containsExactly("find_login_credentials");
+    }
+
+    @Test
     void applicationRoleCannotDisableRowLevelSecurity() throws SQLException {
         try (Connection connection = connectAsAppUser();
              Statement statement = connection.createStatement()) {

@@ -1,0 +1,27 @@
+meta {
+  name: Login com senha errada
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "senha-errada"
+  }
+}
+
+assert {
+  res.status: eq 401
+  res.body.detail: eq "E-mail ou senha inválidos."
+}
+
+docs {
+  Cenário N-9: senha errada, 401 com mensagem genérica.
+}

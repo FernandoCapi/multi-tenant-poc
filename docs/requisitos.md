@@ -127,10 +127,10 @@ política da [seção 7](#7-política-de-respostas-de-erro).
 
 | CA | Critério |
 |---|---|
-| CA-05.1 | Nenhuma senha é armazenada em texto puro; o hash usa um algoritmo adaptativo para senhas (definido na implementação). |
-| CA-05.2 | Dado um e-mail inexistente ou uma senha errada, quando o login é tentado, então a resposta é **401** com a mesma mensagem nos dois casos. |
-| CA-05.3 | Dada uma rota de negócio, quando chamada sem token, com token expirado ou com token adulterado, então a resposta é **401**. |
-| CA-05.4 | O JWT é assinado pelo servidor e tem expiração; os valores concretos são definidos na implementação. |
+| CA-05.1 | Nenhuma senha é armazenada em texto puro; o hash usa um algoritmo adaptativo para senhas. **Implementado (P-006):** bcrypt via `DelegatingPasswordEncoder`; a aplicação não lê hashes diretamente. |
+| CA-05.2 | Dado um e-mail inexistente ou uma senha errada, quando o login é tentado, então a resposta é **401** com a mesma mensagem nos dois casos. **Testado (P-006):** `LoginIntegrationTest`. |
+| CA-05.3 | Dada uma rota de negócio, quando chamada sem token, com token expirado ou com token adulterado, então a resposta é **401**. **Testado (P-006):** `MeIntegrationTest`. |
+| CA-05.4 | O JWT é assinado pelo servidor e tem expiração. **Implementado (P-006):** HS256, 60 minutos, sem refresh ([ADR-0002](adr/0002-autenticacao-jwt.md)). |
 
 ### RF-06 — Isolamento e autorização
 
