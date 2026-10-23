@@ -13,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import org.hibernate.annotations.TenantId;
 
@@ -67,6 +68,10 @@ public class Goal {
 
     @Column(name = "archived_at")
     private Instant archivedAt;
+
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     protected Goal() {
     }
