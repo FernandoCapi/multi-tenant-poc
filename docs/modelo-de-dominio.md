@@ -143,12 +143,13 @@ stateDiagram-v2
     COMPLETED --> ACTIVE : reabrir (OWNER)
     ACTIVE --> ARCHIVED : arquivar (OWNER)
     COMPLETED --> ARCHIVED : arquivar (OWNER)
-    ARCHIVED --> ACTIVE : desarquivar (OWNER) — pendente PV-02
+    ARCHIVED --> ACTIVE : desarquivar (OWNER)
     ACTIVE --> [*] : excluir (OWNER, sem contribuições)
 ```
 
 - "Meta atingida" (`targetReached`) é calculada e **não** muda o status automaticamente (D-08).
-- A transição ARCHIVED → ACTIVE e a exclusão em outros status estão pendentes de validação (PV-02).
+- Desarquivar (ARCHIVED → ACTIVE) foi confirmado em P-007 (D-14). A exclusão física, só para
+  objetivos que nunca tiveram contribuição (INV-11), vale em qualquer status.
 
 ## 5. Cálculos
 

@@ -125,6 +125,14 @@ A RLS garante o isolamento **entre famílias**. O controle **por objetivo** (DON
 fica na camada de aplicação, coberto por testes automatizados (RS-02). Listagens e agregações
 aplicam o mesmo filtro de vínculo usado no detalhe.
 
+Implementado em P-007: `GoalAccessService` resolve, em toda operação, a ordem visibilidade → permissão.
+Sem vínculo com o objetivo, o resultado é 404, o mesmo de um id inexistente ou de outra família; com
+vínculo mas sem ser dono, 403. Corpos de requisição são validados só depois dessas checagens
+(`RequestValidator`). A listagem usa `exists` sobre `goal_members` do usuário corrente, e os totais
+são calculados apenas para os objetivos listados. Alterações de membros bloqueiam a linha do objetivo
+(`SELECT ... FOR UPDATE`) antes de verificar o invariante do último dono; edições concorrentes do
+objetivo são detectadas por lock otimista (`version`, V5) e respondem 409.
+
 ## Alternativas consideradas
 
 ### A. Banco ou schema por tenant
@@ -200,7 +208,17 @@ Implementado em P-006:
 | `TenantContext` preenchido pelo JWT | `TenantContextFilter.java`, registrado em `auth/SecurityConfiguration.java` |
 | Validação de `sub` e `family_id` no token | `auth/VestaTokenValidator.java` |
 
-Ainda não implementado: autorização por objetivo (P-007).
+Implementado em P-007:
+
+| Elemento | Onde |
+|---|---|
+| Visibilidade (404) e permissão de dono (403) por objetivo | `goal/GoalAccessService.java` |
+| Casos de uso de objetivos e membros | `goal/GoalService.java`, `goal/GoalMemberService.java` |
+| Listagem só com vínculo; lock pessimista para membros | `goal/GoalRepository.java` (`findVisible`, `findByIdForUpdate`) |
+| Totais restritos aos objetivos visíveis, sem estornos | `goal/GoalContributionQueries.java`, `goal/GoalProgress.java` |
+| Lock otimista | `V5__add_goal_version.sql`, `@Version` em `Goal` |
+
+Ainda não implementado: registro e estorno de contribuições (P-008).
 
 ## Evidências
 
@@ -249,6 +267,32 @@ tenant; `alter table goals disable row level security` como `app_user` falha com
 login e `/api/me` corretos para usuários das duas famílias; sem token → 401; senha errada → 401 com
 mensagem genérica. O backend também sobe **sem** o perfil `local` contra o banco já com seed.
 
+### Evidências de P-007
+
+**Suíte `./mvnw test`:** 121 testes, 0 falhas.
+
+| Classe (nova) | Testes | Cobre |
+|---|---|---|
+| `GoalAuthorizationIntegrationTest` | 27 | Matriz de permissões (ver, editar, concluir, arquivar, excluir) × DONO, MEMBRO, MEMBRO sem contribuir, sem vínculo, outra família (N-1, N-4, N-5); corpos de 404/403 sem detalhes; 404/403 antes do 422. |
+| `GoalListingIntegrationTest` | 8 | Listagem só com vínculo; sem vínculo, lista vazia (N-4); outra família isolada; arquivados com filtro (D-15); `familyId` forjado no corpo ignorado (N-2); membro de outra família não é adicionado (404). |
+| `GoalLifecycleIntegrationTest` | 6 | Transições válidas e inválidas (D-14); edição só em ATIVO (D-16); exclusão com e sem contribuições; alteração concorrente → `ObjectOptimisticLockingFailureException`. |
+| `GoalMembershipIntegrationTest` | 10 | Adicionar, alterar e remover membros; duplicado (409); outra família (404); só dono gerencia (403/404); último dono (409); quem sai perde o acesso e mantém as contribuições; diretório da família. |
+| `GoalProgressIntegrationTest`, `GoalProgressTest`, `GoalTest` | 4 + 5 + 5 | Acumulado sem estornos, restante, excedente, percentual, meta atingida sem mudar o status, total por membro incluindo quem saiu; regras de status. |
+
+**Testes de mutação** (desfeitos, sem commit):
+
+| Alteração | Resultado |
+|---|---|
+| `requireOwner` sempre permite | 10 de 27 testes da matriz falharam (os 403 viraram 2xx/409). |
+| Listagem sem o filtro de vínculo | 2 de 8 testes de listagem quebraram (por erro ao montar a resposta de objetivo sem vínculo, antes mesmo da asserção). |
+| Invariante do último dono com `< 1` | 1 de 10 testes de membros falhou (`theLastOwnerCannotLeaveNorBeDemoted`). |
+| Acumulado sem excluir estornos | 4 de 4 testes de progresso falharam. |
+
+**Ambiente Compose** (dados demo): Carlos vê Viagem, Aluguel e Parcela do carro (não o objetivo
+individual do Pedro); Pedro não vê o Aluguel e recebe 404 nele (N-4) e 403 ao editar a Viagem (N-5);
+Marcos recebe 404 na Viagem da Silva (N-1); acumulado da Viagem = 3.450,00, sem o estorno de 300.
+A concorrência real entre dois donos saindo ao mesmo tempo não foi testada; a proteção é o lock pessimista.
+
 ## Consequências
 
 - O isolamento entre famílias depende de três camadas independentes (aplicação, persistência, RLS) e
@@ -260,3 +304,5 @@ mensagem genérica. O backend também sobe **sem** o perfil `local` contra o ban
   P-003: RS-04 (no banco), RS-05, RS-06 e RS-07 têm evidência; RS-01 pela API, RS-02, RS-03 e o
   lookup de login ainda faltam. Situação em P-006: RS-03 e o lookup de login têm evidência, e RS-04
   também pela API em `/api/me`. Faltam RS-01 pela API nos endpoints de objetivos e contribuições, e RS-02.
+  Situação em P-007: RS-01 pela API e RS-02 têm evidência para objetivos e membros; faltam os
+  endpoints de contribuições (P-008).

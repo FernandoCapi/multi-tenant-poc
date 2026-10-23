@@ -39,6 +39,7 @@ O `.env` (fora do Git) define os segredos locais:
 
 | Variável | Uso |
 |---|---|
+| `POSTGRES_PORT` | Porta do Postgres no host (padrão 5432). Mude se outra base local já usar a 5432; o backend fora do Docker usa a mesma variável. |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` | Superusuário de bootstrap. Só é usado pelo entrypoint da imagem para criar as roles. |
 | `APP_OWNER_PASSWORD` | Role `app_owner`, dona do schema, usada pelo Flyway. |
 | `APP_USER_PASSWORD` | Role `app_user`, usada pelo backend. Não é superuser, não tem BYPASSRLS e não é dona das tabelas. |
@@ -79,8 +80,8 @@ Todos os usuários demo têm a senha **`vesta-demo`**. Eles existem só com o pe
 | Souza | Marcos | `marcos@souza.demo` | Reforma da cozinha (dono) |
 | Souza | Beatriz | `beatriz@souza.demo` | Reforma da cozinha (dona) |
 
-Os filhos não participam do objetivo Aluguel: é o cenário "filho × aluguel" da demonstração (N-4),
-cujos endpoints chegam na P-007.
+Os filhos não participam do objetivo Aluguel: é o cenário "filho × aluguel" da demonstração (N-4).
+Pedro recebe 404 no Aluguel e 403 ao editar a Viagem; Marcos recebe 404 em qualquer objetivo da Silva.
 
 ```bash
 # Login e dados do usuário logado
@@ -113,7 +114,7 @@ Como as propriedades são resolvidas:
 | Senha da aplicação | `DB_APP_PASSWORD` → `APP_USER_PASSWORD` (do `.env`) | vazio |
 | Usuário do Flyway | `DB_OWNER_USER` | `app_owner` |
 | Senha do Flyway | `DB_OWNER_PASSWORD` → `APP_OWNER_PASSWORD` (do `.env`) | vazio |
-| URL | `DB_URL` | `jdbc:postgresql://localhost:5432/vesta` |
+| URL | `DB_URL` | `jdbc:postgresql://localhost:${POSTGRES_PORT}/vesta` (porta padrão 5432) |
 | Segredo do JWT | `JWT_SECRET` (ambiente ou `.env`) | vazio: o backend não sobe |
 
 Variáveis de ambiente reais têm precedência sobre o `.env`; é assim que o Docker Compose configura
@@ -141,6 +142,11 @@ Compose. Não dependem do banco do Compose nem do `.env`, mas exigem o Docker ro
 | `MeIntegrationTest` | `/api/me` usa só a família do token (`family_id` do cliente é ignorado); sem token, expirado, adulterado, com outra chave ou sem `family_id` → 401. |
 | `TenantContextFilterTest` | Tenant do token só durante a requisição, limpo mesmo com erro. |
 | `DemoDataIntegrationTest` | O perfil `local` carrega as famílias demo, e seus usuários fazem login. |
+| `GoalAuthorizationIntegrationTest` | Matriz de permissões por objetivo: dono, membro, membro sem contribuir, sem vínculo e outra família (404/403). |
+| `GoalListingIntegrationTest` | Listagem só com vínculo, arquivados com filtro, `familyId` forjado ignorado na criação. |
+| `GoalLifecycleIntegrationTest` | Transições de status, edição só em ATIVO, exclusão e alteração concorrente. |
+| `GoalMembershipIntegrationTest` | Gestão de membros, invariante do último dono e saída do objetivo. |
+| `GoalProgressIntegrationTest` / `GoalProgressTest` | Acumulado sem estornos, restante, excedente, percentual e total por membro. |
 
 ## Inspecionar o banco
 
@@ -172,7 +178,9 @@ npx -y @usebruno/cli@4.3.0 run --env local
 ```
 
 A pasta `auth/` cobre login, `/api/me`, `family_id` forjado (N-2), token ausente ou adulterado (N-8)
-e falhas de login com resposta idêntica (N-9).
+e falhas de login com resposta idêntica (N-9). A pasta `goals/` cobre listagem, filho × aluguel (N-4),
+membro sem permissão (N-5), outra família (N-1), criação com `familyId` forjado, membros e
+transições; o objetivo criado é excluído no fim, então a coleção pode ser repetida.
 
 ## Solução de problemas
 
@@ -185,4 +193,5 @@ e falhas de login com resposta idêntica (N-9).
 | `The server requested SCRAM-based authentication, but the password is an empty string` | O backend não encontrou a senha: falta o `.env` na raiz do repositório, ou a IDE usa outro diretório de trabalho | Criar o `.env` (`cp .env.example .env`) e usar a raiz ou `backend/` como diretório de trabalho, ou definir `DB_APP_PASSWORD`/`DB_OWNER_PASSWORD`. |
 | Login demo devolve 401 | Backend rodando sem o perfil `local` num banco sem seed | Rodar com o perfil `local` ao menos uma vez. |
 | `java -version` mostra 8 ou 17 | JDK 21 não ativado neste terminal | Ativar o JDK 21 na sessão (seção acima). |
-| Porta 5432 ou 8080 ocupada | Outro serviço local | Liberar a porta ou ajustar o mapeamento em `docker-compose.yml`. |
+| `Bind for 0.0.0.0:5432 failed: port is already allocated` | Outra base local já usa a 5432 | Definir `POSTGRES_PORT=5433` (ou outra livre) no `.env`. |
+| Porta 8080 ocupada | Outro serviço local | Liberar a porta ou ajustar o mapeamento em `docker-compose.yml`. |

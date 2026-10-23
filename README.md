@@ -7,10 +7,10 @@ famílias (tenants) e controle de acesso por objetivo dentro de cada família.
 A POC também documenta como o Claude Code apoiou análise, arquitetura, implementação, testes,
 revisão e documentação.
 
-> **Estado atual (P-006):** fundação técnica e autenticação prontas: esquema com Row-Level Security
-> forçada, login com JWT, tenant de cada requisição vindo do token, `/api/me`, duas famílias de
-> demonstração e testes automatizados de isolamento. Ainda não há endpoints de objetivos e
-> contribuições (P-007 e P-008) nem frontend (P-009).
+> **Estado atual (P-007):** fundação, autenticação e objetivos prontos: esquema com Row-Level
+> Security forçada, login com JWT, tenant vindo do token, API de objetivos e membros com autorização
+> por objetivo, progresso financeiro (só leitura), duas famílias de demonstração e testes
+> automatizados de isolamento. Ainda não há registro de contribuições (P-008) nem frontend (P-009).
 
 ## API disponível
 
@@ -18,7 +18,20 @@ revisão e documentação.
 |---|---|---|
 | `POST /api/auth/login` | público | `{email, password}` → `{accessToken, tokenType, expiresIn}` |
 | `GET /api/me` | token | Usuário logado e sua família |
+| `GET /api/goals?status=` | token | Objetivos em que o usuário tem vínculo, com progresso; sem `status`, exclui arquivados |
+| `POST /api/goals` | token | Cria objetivo (o criador vira dono); `members` opcional |
+| `GET /api/goals/{id}` | vinculados | Detalhe, membros, progresso e total por membro |
+| `PATCH /api/goals/{id}` | dono, só ATIVO | Título, descrição, valor-alvo, data-limite |
+| `POST /api/goals/{id}/complete` · `reopen` · `archive` · `unarchive` | dono | Transições de status (D-14) |
+| `DELETE /api/goals/{id}` | dono | Só objetivos sem contribuições |
+| `POST /api/goals/{id}/members` | dono | Adiciona membro da família (`userId`, `role`, `contributes`) |
+| `PATCH /api/goals/{id}/members/{userId}` | dono | Papel e/ou participação financeira |
+| `DELETE /api/goals/{id}/members/{userId}` | dono, ou o próprio membro (sair) | O último dono não sai |
+| `GET /api/family/members` | token | Membros da família do usuário |
 | `GET /actuator/health` | público | Saúde da aplicação |
+
+Erros: 404 para objetivo inexistente, de outra família ou sem vínculo; 403 para quem vê mas não pode;
+409 para conflito de estado; 422 para dados inválidos.
 
 Usuários de demonstração (senha `vesta-demo`) em [docs/setup-local.md](docs/setup-local.md#usuários-de-demonstração).
 
@@ -44,7 +57,7 @@ backend/                 API Spring Boot (pacote com.vesta)
   src/main/java/com/vesta/tenant/   TenantContext, filtro que o preenche pelo token e vínculo à transação
   src/main/java/com/vesta/user/     entidade User e /api/me
   src/main/java/com/vesta/family/   entidade Family
-  src/main/java/com/vesta/goal/     entidade Goal
+  src/main/java/com/vesta/goal/     objetivos, membros, autorização por objetivo e progresso
   src/main/resources/db/migration/  migrations Flyway (esquema, RLS, privilégios, lookup de login)
   src/main/resources/db/seed/       famílias de demonstração (só no perfil local)
   src/test/java/com/vesta/          testes de isolamento, autenticação e dados demo
