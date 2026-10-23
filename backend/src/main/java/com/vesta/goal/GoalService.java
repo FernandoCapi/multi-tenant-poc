@@ -1,6 +1,8 @@
 package com.vesta.goal;
 
+import java.math.BigDecimal;
 import java.time.Clock;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -52,8 +54,13 @@ public class GoalService {
         Set<GoalStatus> statuses = status == null ? DEFAULT_LISTED_STATUSES : EnumSet.of(status);
         Map<UUID, GoalMember> myMemberships = goalMemberRepository.findByUserId(userId).stream()
                 .collect(Collectors.toMap(GoalMember::getGoalId, Function.identity()));
-        return goalRepository.findVisible(userId, statuses).stream()
-                .map(goal -> GoalSummaryResponse.of(goal, myMemberships.get(goal.getId())))
+        List<Goal> goals = goalRepository.findVisible(userId, statuses);
+        // Totals only for the goals just listed, i.e. the ones the user can see (CA-03.8)
+        Map<UUID, BigDecimal> accumulated = contributionQueries.accumulatedByGoal(
+                goals.stream().map(Goal::getId).toList());
+        return goals.stream()
+                .map(goal -> GoalSummaryResponse.of(goal, myMemberships.get(goal.getId()),
+                        accumulated.getOrDefault(goal.getId(), BigDecimal.ZERO)))
                 .toList();
     }
 
@@ -150,16 +157,28 @@ public class GoalService {
     GoalDetailResponse toDetail(GoalAccess access) {
         Goal goal = access.goal();
         List<GoalMember> members = goalMemberRepository.findByGoalIdOrderByAddedAt(goal.getId());
-        Map<UUID, String> names = userRepository.findAllById(members.stream().map(GoalMember::getUserId).toList())
-                .stream()
+        Map<UUID, BigDecimal> byContributor = contributionQueries.accumulatedByContributor(goal.getId());
+        Set<UUID> memberIds = members.stream().map(GoalMember::getUserId).collect(Collectors.toSet());
+        Set<UUID> people = new HashSet<>(memberIds);
+        people.addAll(byContributor.keySet());
+        Map<UUID, String> names = userRepository.findAllById(people).stream()
                 .collect(Collectors.toMap(User::getId, User::getDisplayName));
+
         List<GoalDetailResponse.MemberResponse> memberResponses = members.stream()
                 .map(member -> new GoalDetailResponse.MemberResponse(member.getUserId(),
                         names.get(member.getUserId()), member.getRole(), member.isContributes()))
                 .toList();
+        List<GoalDetailResponse.ContributorTotal> contributorTotals = byContributor.entrySet().stream()
+                .map(total -> new GoalDetailResponse.ContributorTotal(total.getKey(), names.get(total.getKey()),
+                        total.getValue(), memberIds.contains(total.getKey())))
+                .sorted(Comparator.comparing(GoalDetailResponse.ContributorTotal::amount).reversed())
+                .toList();
+        BigDecimal accumulated = byContributor.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+
         return new GoalDetailResponse(goal.getId(), goal.getTitle(), goal.getDescription(), goal.getStatus(),
                 goal.getTargetAmount(), goal.getCurrency(), goal.getDueDate(), goal.getCreatedBy(),
                 goal.getCreatedAt(), goal.getCompletedAt(), goal.getArchivedAt(), access.membership().getRole(),
-                access.membership().isContributes(), memberResponses);
+                access.membership().isContributes(), memberResponses,
+                GoalProgress.of(goal.getTargetAmount(), accumulated), contributorTotals);
     }
 }

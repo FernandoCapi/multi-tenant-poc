@@ -13,10 +13,12 @@ public record GoalSummaryResponse(
         String currency,
         LocalDate dueDate,
         GoalRole myRole,
-        boolean iContribute) {
+        boolean iContribute,
+        GoalProgress progress) {
 
-    static GoalSummaryResponse of(Goal goal, GoalMember membership) {
+    static GoalSummaryResponse of(Goal goal, GoalMember membership, BigDecimal accumulated) {
         return new GoalSummaryResponse(goal.getId(), goal.getTitle(), goal.getStatus(), goal.getTargetAmount(),
-                goal.getCurrency(), goal.getDueDate(), membership.getRole(), membership.isContributes());
+                goal.getCurrency(), goal.getDueDate(), membership.getRole(), membership.isContributes(),
+                GoalProgress.of(goal.getTargetAmount(), accumulated));
     }
 }

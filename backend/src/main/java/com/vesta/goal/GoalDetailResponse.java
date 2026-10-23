@@ -20,8 +20,14 @@ public record GoalDetailResponse(
         Instant archivedAt,
         GoalRole myRole,
         boolean iContribute,
-        List<MemberResponse> members) {
+        List<MemberResponse> members,
+        GoalProgress progress,
+        List<ContributorTotal> contributionsByMember) {
 
     public record MemberResponse(UUID userId, String displayName, GoalRole role, boolean contributes) {
+    }
+
+    /** Non-reversed total of one contributor; {@code currentMember} is false for people who left. */
+    public record ContributorTotal(UUID userId, String displayName, BigDecimal amount, boolean currentMember) {
     }
 }
