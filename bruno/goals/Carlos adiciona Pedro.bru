@@ -1,0 +1,34 @@
+meta {
+  name: Carlos adiciona Pedro
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/goals/{{createdGoalId}}/members
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carlosToken}}
+}
+
+body:json {
+  {
+    "userId": "{{childId}}",
+    "role": "MEMBER",
+    "contributes": true
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("Pedro passa a ser membro", function() {
+    const pedro = res.body.members.find(member => member.userId === bru.getEnvVar("childId"));
+    expect(pedro.role).to.equal("MEMBER");
+  });
+}

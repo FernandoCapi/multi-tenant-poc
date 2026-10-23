@@ -1,0 +1,20 @@
+meta {
+  name: Carlos reabre o objetivo
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/api/goals/{{createdGoalId}}/reopen
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carlosToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq ACTIVE
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Carlos vê o Aluguel
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/goals/{{rentGoalId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carlosToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.myRole: eq OWNER
+  res.body.progress.accumulatedAmount: eq 2500
+  res.body.progress.targetReached: eq true
+  res.body.status: eq ACTIVE
+}
+
+docs {
+  Meta atingida não conclui o objetivo: a conclusão é manual (D-08).
+}

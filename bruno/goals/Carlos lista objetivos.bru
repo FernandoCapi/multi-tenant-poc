@@ -1,0 +1,32 @@
+meta {
+  name: Carlos lista objetivos
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/goals
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carlosToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("vê o Aluguel e a Viagem, mas não o objetivo individual do Pedro", function() {
+    const titles = res.body.map(goal => goal.title);
+    expect(titles).to.include("Aluguel");
+    expect(titles).to.include("Viagem de férias");
+    expect(titles).to.not.include("Videogame novo");
+  });
+}
+
+docs {
+  Só objetivos em que Carlos tem vínculo, com o progresso de cada um.
+}

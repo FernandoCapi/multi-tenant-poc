@@ -1,0 +1,23 @@
+meta {
+  name: Marcos acessa o objetivo criado
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/goals/{{createdGoalId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{marcosToken}}
+}
+
+assert {
+  res.status: eq 404
+}
+
+docs {
+  Confirma que o objetivo criado com o familyId forjado não foi parar na Família Souza.
+}
