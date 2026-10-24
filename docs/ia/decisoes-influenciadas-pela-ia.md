@@ -63,6 +63,10 @@
 | IA-43 | Execução | Vite dev com proxy + serviço nginx no Compose | Aceita | T-02 | P-009 |
 | IA-44 | Regra de exibição | Formulário de contribuição também para o dono que não contribui (D-03); o plano dizia o contrário | Correção da IA durante a implementação | Ver SI-003 | P-009 |
 | IA-45 | Layout do frontend | CSS do formulário entregue na P-009 com campos sobrepostos | Incorreta | Ver SI-004; corrigido no mesmo branch | P-009 (ajuste) |
+| IA-46 | ADR-0001 | Aceitar o ADR com tabela de evidências RS-01..RS-07 e limitações explícitas | Aceita | ADR-0001 → Aceito | P-010 |
+| IA-47 | CI | GitHub Actions com backend (Testcontainers) e frontend | Aceita | `.github/workflows/ci.yml` | P-010 |
+| IA-48 | Demonstração | Roteiro com N-1..N-9 e script SQL para a RLS sem WHERE | Aceita | `docs/demonstracao.md`, `infra/demo/n3-rls-sem-where.sql` | P-010 |
+| IA-49 | Verificação final | O plano previa `docker compose down -v` no ambiente do usuário; ao perceber dados criados pelo usuário no banco local, a IA validou num projeto Compose isolado (`vesta-verify`) e preservou o ambiente original | Ajuste da IA durante a execução | Volume do usuário intacto; ambiente novo validado | P-010 |
 
 ## Observações
 
