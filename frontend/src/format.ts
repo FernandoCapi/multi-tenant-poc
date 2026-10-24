@@ -21,6 +21,27 @@ export function formatMoney(amount: number): string {
   return currency.format(amount)
 }
 
+// Up to R$ 9.999.999.999.999,99: stays an exact integer number of cents in JavaScript
+const MAX_CENT_DIGITS = 15
+
+/**
+ * Reads what the user typed in a money field as whole cents, cash-register style: only digits
+ * count and they fill from the right ("2550" → 2550 cents = R$ 25,50). Empty or zero → null.
+ */
+export function parseCents(typed: string): number | null {
+  const digits = typed.replace(/\D/g, '').replace(/^0+/, '').slice(0, MAX_CENT_DIGITS)
+  return digits === '' ? null : Number(digits)
+}
+
+export function formatCents(cents: number): string {
+  return currency.format(cents / 100)
+}
+
+/** Cents as the decimal amount the API expects (two places, e.g. 2550 → 25.5). */
+export function centsToAmount(cents: number): number {
+  return cents / 100
+}
+
 export function formatPercent(value: number): string {
   return `${percent.format(value)}%`
 }

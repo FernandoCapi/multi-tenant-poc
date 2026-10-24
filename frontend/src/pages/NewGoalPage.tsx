@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router'
 import { ApiError, api } from '../api/client'
 import type { FamilyMember, GoalRole, NewMember } from '../api/types'
 import { useAuth } from '../auth/useAuth'
+import { MoneyInput } from '../components/MoneyInput'
+import { centsToAmount } from '../format'
 
 interface MemberChoice {
   selected: boolean
@@ -18,7 +20,7 @@ export function NewGoalPage() {
   const [choices, setChoices] = useState<Record<string, MemberChoice>>({})
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [targetAmount, setTargetAmount] = useState('')
+  const [targetCents, setTargetCents] = useState<number | null>(null)
   const [dueDate, setDueDate] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -40,6 +42,9 @@ export function NewGoalPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    if (targetCents === null) {
+      return
+    }
     setError(null)
     setSubmitting(true)
     const members: NewMember[] = others
@@ -49,7 +54,7 @@ export function NewGoalPage() {
       const created = await api.createGoal({
         title: title.trim(),
         description: description.trim() || undefined,
-        targetAmount: Number(targetAmount),
+        targetAmount: centsToAmount(targetCents),
         dueDate: dueDate || undefined,
         members,
       })
@@ -74,8 +79,8 @@ export function NewGoalPage() {
           <textarea maxLength={1000} value={description} onChange={(e) => setDescription(e.target.value)} />
         </label>
         <label>
-          Valor-alvo (R$)
-          <input type="number" min="0.01" step="0.01" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} required />
+          Valor-alvo
+          <MoneyInput cents={targetCents} onChange={setTargetCents} required />
         </label>
         <label>
           Data-limite (opcional)

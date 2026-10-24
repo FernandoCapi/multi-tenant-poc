@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError, api } from '../api/client'
 import type { GoalDetail } from '../api/types'
-import { todayInSaoPaulo } from '../format'
+import { centsToAmount, todayInSaoPaulo } from '../format'
+import { MoneyInput } from './MoneyInput'
 
 interface Props {
   goal: GoalDetail
@@ -21,7 +22,7 @@ export function ContributionForm({ goal, currentUserId, onRegistered }: Props) {
   const [contributorId, setContributorId] = useState(
     contributors.some((member) => member.userId === currentUserId) ? currentUserId : contributors[0]?.userId ?? '',
   )
-  const [amount, setAmount] = useState('')
+  const [amountCents, setAmountCents] = useState<number | null>(null)
   const [contributedOn, setContributedOn] = useState('')
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -33,16 +34,19 @@ export function ContributionForm({ goal, currentUserId, onRegistered }: Props) {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    if (amountCents === null) {
+      return
+    }
     setError(null)
     setSubmitting(true)
     try {
       await api.registerContribution(goal.id, {
-        amount: Number(amount),
+        amount: centsToAmount(amountCents),
         contributedOn: contributedOn || undefined,
         note: note.trim() || undefined,
         contributorId: contributorId === currentUserId ? undefined : contributorId,
       })
-      setAmount('')
+      setAmountCents(null)
       setContributedOn('')
       setNote('')
       onRegistered()
@@ -68,8 +72,8 @@ export function ContributionForm({ goal, currentUserId, onRegistered }: Props) {
         </label>
       )}
       <label>
-        Valor (R$)
-        <input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+        Valor
+        <MoneyInput cents={amountCents} onChange={setAmountCents} required />
       </label>
       <label>
         Data

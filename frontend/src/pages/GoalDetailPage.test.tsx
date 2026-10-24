@@ -104,7 +104,8 @@ describe('GoalDetailPage', () => {
     const contributor = screen.getByLabelText('Contribuinte')
     expect(within(contributor).queryByRole('option', { name: 'Ana' })).not.toBeInTheDocument()
     await user.selectOptions(contributor, 'pedro')
-    await user.type(screen.getByLabelText('Valor (R$)'), '25.50')
+    await user.type(screen.getByLabelText('Valor'), '2550')
+    expect(screen.getByLabelText('Valor')).toHaveValue('R$ 25,50')
     await user.click(screen.getByRole('button', { name: 'Registrar contribuição' }))
 
     const post = fetchMock.mock.calls.find(([url, init]) => url === '/api/goals/trip/contributions' && init?.method === 'POST')

@@ -41,7 +41,8 @@ describe('NewGoalPage', () => {
     )
 
     await user.type(await screen.findByLabelText('Título'), 'Presente')
-    await user.type(screen.getByLabelText('Valor-alvo (R$)'), '300')
+    await user.type(screen.getByLabelText('Valor-alvo'), '30000')
+    expect(screen.getByLabelText('Valor-alvo')).toHaveValue('R$ 300,00')
     // The creator is not offered: they own the goal anyway
     expect(screen.queryByRole('checkbox', { name: 'Carlos' })).not.toBeInTheDocument()
     await user.click(await screen.findByRole('checkbox', { name: 'Ana' }))
