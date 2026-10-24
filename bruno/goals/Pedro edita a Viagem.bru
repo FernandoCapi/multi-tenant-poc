@@ -1,0 +1,30 @@
+meta {
+  name: Pedro edita a Viagem
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/goals/{{tripGoalId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{pedroToken}}
+}
+
+body:json {
+  {
+    "title": "Viagem para a Disney"
+  }
+}
+
+assert {
+  res.status: eq 403
+  res.body.detail: eq "Você não tem permissão para esta ação."
+}
+
+docs {
+  Cenário N-5: Pedro vê a Viagem (é MEMBER), mas só o dono edita.
+}

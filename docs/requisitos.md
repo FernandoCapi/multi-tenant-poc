@@ -70,15 +70,15 @@ política da [seção 7](#7-política-de-respostas-de-erro).
 
 | CA | Critério |
 |---|---|
-| CA-02.1 | Dado um usuário autenticado, quando cria um objetivo com título e valor-alvo > 0, então o objetivo nasce ATIVO, na família do usuário, e o criador é DONO com `contribui = sim`. |
-| CA-02.2 | Dado um objetivo criado sem adicionar membros, então somente o criador o vê (objetivo individual). |
-| CA-02.3 | O detalhe do objetivo apresenta valor-alvo, acumulado, restante, excedente, percentual e o indicador "meta atingida", calculados conforme a [seção 6](#6-regras-de-cálculo). |
-| CA-02.4 | Dado um DONO, quando conclui um objetivo ATIVO, então o status passa a CONCLUÍDO; a conclusão é sempre manual, mesmo com a meta atingida. |
-| CA-02.5 | Dado um DONO, quando reabre um objetivo CONCLUÍDO, então o status volta a ATIVO. |
-| CA-02.6 | Dado um DONO, quando arquiva um objetivo ATIVO ou CONCLUÍDO, então ele fica oculto na listagem padrão e visível pelo filtro de arquivados; nenhum dado é apagado. |
-| CA-02.7 | Dado um objetivo que nunca teve contribuições, quando o DONO o exclui, então ele é removido fisicamente. |
-| CA-02.8 | Dado um objetivo com pelo menos uma contribuição (inclusive estornada), quando o DONO tenta excluí-lo, então a operação é rejeitada com **409**. |
-| CA-02.9 | Dado um MEMBRO, quando tenta editar, concluir, reabrir, arquivar ou excluir o objetivo, então recebe **403**. |
+| CA-02.1 | Dado um usuário autenticado, quando cria um objetivo com título e valor-alvo > 0, então o objetivo nasce ATIVO, na família do usuário, e o criador é DONO com `contribui = sim`. **Testado (P-007):** `GoalListingIntegrationTest` |
+| CA-02.2 | Dado um objetivo criado sem adicionar membros, então somente o criador o vê (objetivo individual). **Testado (P-007):** `GoalListingIntegrationTest` |
+| CA-02.3 | O detalhe do objetivo apresenta valor-alvo, acumulado, restante, excedente, percentual e o indicador "meta atingida", calculados conforme a [seção 6](#6-regras-de-cálculo). **Testado (P-007):** `GoalProgressIntegrationTest`, `GoalProgressTest` |
+| CA-02.4 | Dado um DONO, quando conclui um objetivo ATIVO, então o status passa a CONCLUÍDO; a conclusão é sempre manual, mesmo com a meta atingida. **Testado (P-007):** `GoalLifecycleIntegrationTest` |
+| CA-02.5 | Dado um DONO, quando reabre um objetivo CONCLUÍDO, então o status volta a ATIVO. **Testado (P-007):** `GoalLifecycleIntegrationTest` |
+| CA-02.6 | Dado um DONO, quando arquiva um objetivo ATIVO ou CONCLUÍDO, então ele fica oculto na listagem padrão e visível pelo filtro de arquivados; nenhum dado é apagado. **Testado (P-007):** `GoalListingIntegrationTest` |
+| CA-02.7 | Dado um objetivo que nunca teve contribuições, quando o DONO o exclui, então ele é removido fisicamente. **Testado (P-007):** `GoalLifecycleIntegrationTest` |
+| CA-02.8 | Dado um objetivo com pelo menos uma contribuição (inclusive estornada), quando o DONO tenta excluí-lo, então a operação é rejeitada com **409**. **Testado (P-007):** `GoalLifecycleIntegrationTest` |
+| CA-02.9 | Dado um MEMBRO, quando tenta editar, concluir, reabrir, arquivar ou excluir o objetivo, então recebe **403**. **Testado (P-007):** `GoalAuthorizationIntegrationTest` |
 
 ### RF-03 — Participação e visibilidade
 
@@ -89,14 +89,14 @@ política da [seção 7](#7-política-de-respostas-de-erro).
 
 | CA | Critério |
 |---|---|
-| CA-03.1 | Dado um usuário, quando lista objetivos, então recebe somente objetivos dos quais é membro (DONO ou MEMBRO). |
-| CA-03.2 | Dado um DONO, quando adiciona um membro da mesma família informando papel e `contribui`, então o membro passa a ver o objetivo. |
-| CA-03.3 | Dado um DONO, quando altera o papel ou o `contribui` de um membro, ou o remove, então a alteração é aplicada imediatamente às permissões. |
-| CA-03.4 | Dado um DONO, quando tenta adicionar um usuário de outra família (ou um id inexistente), então recebe **404**, sem revelar se o usuário existe em outra família. |
-| CA-03.5 | Dado o único DONO de um objetivo, quando tenta sair, ser rebaixado a MEMBRO ou ser removido, então a operação é rejeitada com **409**. |
-| CA-03.6 | Dado um MEMBRO, quando sai do objetivo, então passa a receber **404** ao acessá-lo, e suas contribuições continuam no histórico e no acumulado. |
-| CA-03.7 | Dado um membro com `contribui = não`, então ele vê o objetivo, as contribuições e os totais, mas não pode ser contribuinte. |
-| CA-03.8 | Todo total agregado apresentado a um usuário (ex.: soma dos seus objetivos) considera somente objetivos que ele pode ver. |
+| CA-03.1 | Dado um usuário, quando lista objetivos, então recebe somente objetivos dos quais é membro (DONO ou MEMBRO). **Testado (P-007):** `GoalListingIntegrationTest` |
+| CA-03.2 | Dado um DONO, quando adiciona um membro da mesma família informando papel e `contribui`, então o membro passa a ver o objetivo. **Testado (P-007):** `GoalMembershipIntegrationTest` |
+| CA-03.3 | Dado um DONO, quando altera o papel ou o `contribui` de um membro, ou o remove, então a alteração é aplicada imediatamente às permissões. **Testado (P-007):** `GoalMembershipIntegrationTest` |
+| CA-03.4 | Dado um DONO, quando tenta adicionar um usuário de outra família (ou um id inexistente), então recebe **404**, sem revelar se o usuário existe em outra família. **Testado (P-007):** `GoalMembershipIntegrationTest` |
+| CA-03.5 | Dado o único DONO de um objetivo, quando tenta sair, ser rebaixado a MEMBRO ou ser removido, então a operação é rejeitada com **409**. **Testado (P-007):** `GoalMembershipIntegrationTest` |
+| CA-03.6 | Dado um MEMBRO, quando sai do objetivo, então passa a receber **404** ao acessá-lo, e suas contribuições continuam no histórico e no acumulado. **Testado (P-007):** `GoalMembershipIntegrationTest`, `GoalProgressIntegrationTest` |
+| CA-03.7 | Dado um membro com `contribui = não`, então ele vê o objetivo, as contribuições e os totais, mas não pode ser contribuinte. **Testado (P-007):** `GoalAuthorizationIntegrationTest` (visualização; a restrição de contribuir entra na P-008) |
+| CA-03.8 | Todo total agregado apresentado a um usuário (ex.: soma dos seus objetivos) considera somente objetivos que ele pode ver. **Testado (P-007):** `GoalListingIntegrationTest`, `GoalProgressIntegrationTest` |
 
 ### RF-04 — Contribuições financeiras
 
@@ -152,8 +152,8 @@ tela ou serão demonstrados apenas pela coleção Bruno.
 
 | ID | Requisito | Critérios de aceitação |
 |---|---|---|
-| RS-01 | **Isolamento entre famílias** em leitura, criação, atualização, exclusão, listagem e agregação. | Usuário da família A, usando ids de recursos da família B: detalhe, contribuições, estorno, alteração e exclusão → **404**; listagens e totais nunca incluem dados de B. |
-| RS-02 | **Autorização por objetivo** dentro da mesma família. | Filho sem vínculo com o objetivo do aluguel: o objetivo não aparece na listagem, o detalhe e as contribuições retornam **404** e os totais não o incluem. |
+| RS-01 | **Isolamento entre famílias** em leitura, criação, atualização, exclusão, listagem e agregação. | Usuário da família A, usando ids de recursos da família B: detalhe, contribuições, estorno, alteração e exclusão → **404**; listagens e totais nunca incluem dados de B. **P-007:** objetivos e membros testados em `GoalAuthorizationIntegrationTest` e `GoalListingIntegrationTest`; contribuições na P-008. |
+| RS-02 | **Autorização por objetivo** dentro da mesma família. | Filho sem vínculo com o objetivo do aluguel: o objetivo não aparece na listagem, o detalhe e as contribuições retornam **404** e os totais não o incluem. **P-007:** `GoalAuthorizationIntegrationTest`, `GoalListingIntegrationTest`. |
 | RS-03 | **Autenticação obrigatória** nas rotas de negócio. | Ver RF-05. |
 | RS-04 | **Tenant resolvido pelo servidor.** O `family_id` nunca é aceito como entrada do cliente. | Um `family_id` (ou equivalente) enviado no corpo, na query ou em cabeçalho é ignorado ou rejeitado; o recurso é sempre criado/consultado no tenant do usuário autenticado. |
 | RS-05 | **Defesa em profundidade com RLS** ([ADR-0001](adr/0001-estrategia-multitenant.md)). | Consulta sem `WHERE family_id` executada com a role da aplicação retorna somente linhas do tenant do contexto; a role da aplicação não é superuser nem possui BYPASSRLS. |
@@ -240,11 +240,11 @@ Todos os cenários acima também devem existir como testes automatizados e na co
 Padrões adotados provisoriamente; detalhes em [decisoes-de-negocio.md](decisoes-de-negocio.md#itens-pendentes-de-validação).
 
 - PV-01 Estorno só em objetivo ATIVO.
-- PV-02 Transições de status, incluindo desarquivar (ARQUIVADO → ATIVO).
-- PV-03 Arquivados ocultos por padrão e visíveis por filtro.
+- ~~PV-02~~ Transições de status, incluindo desarquivar: **confirmado em P-007 (D-14)**.
+- ~~PV-03~~ Arquivados ocultos por padrão e visíveis por filtro: **confirmado em P-007 (D-15)**.
 - PV-04 Data da contribuição informada pelo usuário e não futura.
 - ~~PV-05~~ Estorno como registro próprio, um por contribuição: **confirmado em P-003 (D-13)**.
-- PV-06 Edição dos dados do objetivo apenas em status ATIVO.
+- ~~PV-06~~ Edição dos dados do objetivo apenas em status ATIVO: **confirmado em P-007 (D-16)**.
 - PV-07 Quais fluxos além dos obrigatórios terão tela (RF-07).
 
 ## 10. Rastreabilidade
@@ -252,7 +252,7 @@ Padrões adotados provisoriamente; detalhes em [decisoes-de-negocio.md](decisoes
 | Requisito | Decisões |
 |---|---|
 | RF-01 | DT-04, D-11 |
-| RF-02 | D-04, D-08, D-12 |
+| RF-02 | D-04, D-08, D-12, D-14, D-15, D-16 |
 | RF-03 | D-01, D-05, D-06, D-07 |
 | RF-04 | D-02, D-03, D-05, D-07, D-12, D-13 |
 | RF-05 | DT-04 |

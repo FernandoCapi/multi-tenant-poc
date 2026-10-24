@@ -6,7 +6,7 @@
 
 ## Situação atual
 
-Até a etapa P-003 (2026-10-22): **1 sugestão inadequada registrada** (SI-001).
+Até a etapa P-007 (2026-10-23): **2 sugestões incorretas ou inadequadas registradas** (SI-001, SI-002).
 
 A recomendação não adotada em P-001 (IA-01, papel familiar + ACL) não entra aqui: foi uma
 preferência de modelagem do usuário, não um erro técnico.
@@ -45,3 +45,16 @@ Ver [decisoes-influenciadas-pela-ia.md](decisoes-influenciadas-pela-ia.md).
 - **Aprendizado:** antes de propor instalações ou mudanças de configuração globais, verificar e
   perguntar sobre restrições da máquina. Preferir ferramentas isoladas por projeto ou sessão.
   Regra registrada no `CLAUDE.md` (não alterar JDK, Maven ou variáveis globais).
+
+### SI-002 — Resultado esperado errado no plano da P-007
+
+- **Data / etapa:** 2026-10-23, P-007 (verificação).
+- **Sugestão da IA:** o plano listava como critério de verificação "Carlos vê 4 objetivos" nos dados demo.
+- **Problema:** Carlos tem vínculo com 3 objetivos (Viagem, Aluguel, Parcela do carro). O Videogame é
+  o objetivo individual do Pedro, e pela D-01 só quem tem vínculo o vê. O comportamento esperado
+  correto é 3; a expectativa do plano contrariava a regra que a própria etapa implementa.
+- **Evidência:** saída de `GET /api/goals` com o token do Carlos no ambiente Compose (3 objetivos) e
+  `R__demo_families.sql` (Carlos não é membro do Videogame).
+- **Decisão tomada:** manter a implementação; corrigir a expectativa no report e no ADR-0001. O cenário
+  Bruno verifica explicitamente que o Videogame não aparece para o Carlos.
+- **Aprendizado:** derivar números esperados dos dados de origem (seeds) e das regras, não de memória.

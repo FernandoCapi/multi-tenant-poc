@@ -1,0 +1,27 @@
+meta {
+  name: Pedro lista objetivos
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/goals
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{pedroToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("o Aluguel não aparece para o filho (N-4)", function() {
+    const titles = res.body.map(goal => goal.title);
+    expect(titles).to.not.include("Aluguel");
+    expect(titles).to.include("Viagem de férias");
+  });
+}

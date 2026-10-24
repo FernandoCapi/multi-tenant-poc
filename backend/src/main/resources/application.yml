@@ -10,7 +10,7 @@ spring:
       - optional:file:../.env[.properties]
   datasource:
     # Runtime role: no superuser, no BYPASSRLS (ADR-0001)
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/vesta}
+    url: ${DB_URL:jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/vesta}
     username: ${DB_APP_USER:app_user}
     password: ${DB_APP_PASSWORD:${APP_USER_PASSWORD:}}
   flyway:

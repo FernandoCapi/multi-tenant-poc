@@ -1,0 +1,24 @@
+meta {
+  name: Marcos acessa a Viagem da Silva
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/goals/{{tripGoalId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{marcosToken}}
+}
+
+assert {
+  res.status: eq 404
+  res.body.detail: eq "Objetivo não encontrado."
+}
+
+docs {
+  Cenário N-1: usuário da Família Souza usa o id de um objetivo da Família Silva.
+}

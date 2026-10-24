@@ -1,0 +1,23 @@
+meta {
+  name: Carlos exclui o objetivo criado
+  type: http
+  seq: 15
+}
+
+delete {
+  url: {{baseUrl}}/api/goals/{{createdGoalId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carlosToken}}
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  Sem contribuições, o objetivo pode ser excluído. Também deixa a coleção repetível (a base demo volta ao estado inicial).
+}

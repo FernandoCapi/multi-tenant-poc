@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -100,7 +101,7 @@ class TenantIsolationIntegrationTest extends PostgresIntegrationTest {
         TenantContext.set(familyA.familyId());
 
         Goal saved = transactionTemplate.execute(status -> goalRepository.saveAndFlush(
-                new Goal("Reserva de emergência", new BigDecimal("5000.00"), familyA.userId())));
+                newGoal("Reserva de emergência", "5000.00")));
 
         assertThat(saved.getFamilyId()).isEqualTo(familyA.familyId());
         assertThat(storedFamilyOf(saved.getId())).isEqualTo(familyA.familyId());
@@ -112,8 +113,12 @@ class TenantIsolationIntegrationTest extends PostgresIntegrationTest {
 
         assertThat(goals).isEmpty();
         assertThatThrownBy(() -> transactionTemplate.execute(status -> goalRepository.saveAndFlush(
-                new Goal("Sem família", new BigDecimal("10.00"), familyA.userId()))))
+                newGoal("Sem família", "10.00"))))
                 .isInstanceOf(DataAccessException.class);
+    }
+
+    private Goal newGoal(String title, String targetAmount) {
+        return new Goal(title, null, new BigDecimal(targetAmount), null, familyA.userId(), Instant.now());
     }
 
     private Visibility visibleFamilies() {

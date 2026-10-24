@@ -48,6 +48,8 @@ stack sem razão técnica relevante registrada em ADR. Pacote base: `com.vesta`.
 - A aplicação conecta com uma role sem superuser e sem BYPASSRLS; o Flyway usa outra role.
 - Não crie funções `SECURITY DEFINER` nem roles com BYPASSRLS além de `find_login_credentials` /
   `app_auth` (ADR-0001, seção 7) sem decisão registrada; o `DatabaseSecurityTest` mantém a lista.
+- Operações sobre um objetivo começam por `GoalAccessService` (visibilidade → 404, dono → 403) e só
+  depois validam o corpo (`RequestValidator`) e o estado (409). Totais só para objetivos visíveis.
 - Rotas novas exigem token por padrão (`SecurityConfiguration`); só login e health são públicos.
   O usuário corrente vem do `sub` do JWT, nunca de parâmetros.
 - Autorização sempre no backend. Respostas: 404 para inexistente/outra família/sem leitura;

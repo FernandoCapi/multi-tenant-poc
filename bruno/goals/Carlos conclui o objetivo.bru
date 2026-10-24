@@ -1,0 +1,20 @@
+meta {
+  name: Carlos conclui o objetivo
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/api/goals/{{createdGoalId}}/complete
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carlosToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq COMPLETED
+}

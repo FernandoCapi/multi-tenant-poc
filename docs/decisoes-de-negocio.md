@@ -22,6 +22,9 @@
 | D-11 | Famílias e membros somente por seeds | P-001, lote 3 | Aceita |
 | D-12 | BRL com centavos; excedente aceito | P-001, lote 3 | Aceita |
 | D-13 | No máximo um estorno por contribuição, como registro próprio (era PV-05) | P-003 | Aceita |
+| D-14 | Transições de status do objetivo, com desarquivar (era PV-02) | P-007 | Aceita |
+| D-15 | Arquivados ocultos na listagem padrão, com filtro (era PV-03) | P-007 | Aceita |
+| D-16 | Dados do objetivo editáveis só em ATIVO (era PV-06) | P-007 | Aceita |
 | C-01 | Convenção de idioma | P-001, revisão do plano | Definida pelo usuário |
 | C-02 | Nome do projeto: Vesta; pacote `com.vesta` | P-003 | Definida pelo usuário |
 | T-01 | Atualização das versões da stack (DT-01) | P-003 | Definida pelo usuário |
@@ -151,6 +154,27 @@
 - **Garantia no banco:** `UNIQUE (family_id, contribution_id)` em `contribution_reversals`, e a role
   da aplicação só tem `SELECT`/`INSERT` em contribuições e estornos (ADR-0001).
 
+## D-14 — Transições de status do objetivo
+
+- **Decisão:** só o DONO faz transições: ATIVO→CONCLUÍDO (concluir), CONCLUÍDO→ATIVO (reabrir),
+  ATIVO/CONCLUÍDO→ARQUIVADO (arquivar) e ARQUIVADO→ATIVO (desarquivar). Arquivar nunca é definitivo.
+  Um objetivo desarquivado volta a ATIVO e pode receber contribuições.
+- **Origem:** era o padrão provisório PV-02; confirmado pelo usuário em P-007.
+- **Opções consideradas:** com desarquivar (escolhida); arquivado definitivo; desarquivar voltando ao status anterior.
+- **Implementação:** transição inválida → 409. A exclusão física (só sem contribuições, D-08) vale em qualquer status.
+
+## D-15 — Arquivados na listagem
+
+- **Decisão:** `GET /api/goals` traz só ATIVO e CONCLUÍDO; `?status=` filtra por um status, inclusive
+  `ARCHIVED`. O detalhe de um objetivo arquivado continua acessível a quem tem vínculo.
+- **Origem:** era PV-03; confirmado em P-007.
+
+## D-16 — Edição só em objetivos ativos
+
+- **Decisão:** título, descrição, valor-alvo e data-limite só mudam com o objetivo ATIVO; nos demais
+  status a resposta é 409, e o dono reabre ou desarquiva antes de editar.
+- **Origem:** era PV-06; confirmado em P-007.
+
 ## C-02 — Nome do projeto e pacote
 
 - **Decisão:** o projeto se chama **Vesta**. Pacote base Java: `com.vesta`; artefato `vesta-backend`;
@@ -179,9 +203,9 @@ correspondente.
 | ID | Padrão provisório | Motivo |
 |---|---|---|
 | PV-01 | Estorno só em objetivo ATIVO; para corrigir um CONCLUÍDO, reabrir antes. | Mantém consistente a regra "conclusão manual" com um acumulado estável. |
-| PV-02 | Transições: ATIVO→CONCLUÍDO, CONCLUÍDO→ATIVO, ATIVO/CONCLUÍDO→ARQUIVADO, ARQUIVADO→ATIVO (desarquivar, só dono). | Não houve decisão sobre desarquivar. |
-| PV-03 | Arquivados ocultos por padrão e visíveis por filtro a quem tem acesso. | Detalhe de apresentação. |
+| ~~PV-02~~ | **Confirmado em P-007 → D-14.** | — |
+| ~~PV-03~~ | **Confirmado em P-007 → D-15.** | — |
 | PV-04 | Data da contribuição informada pelo usuário, não futura; data de registro do servidor separada. | Permite lançar contribuições passadas. |
 | ~~PV-05~~ | **Confirmado em P-003 → D-13.** | — |
-| PV-06 | Dados do objetivo só podem ser editados em status ATIVO. | Evita alterar alvo de objetivo concluído. |
+| ~~PV-06~~ | **Confirmado em P-007 → D-16.** | — |
 | PV-07 | Fluxos de interface além dos obrigatórios (estorno, criação/edição, gestão de membros) podem ser demonstrados só pela coleção Bruno. | RF-07 exige apenas login, objetivos, progresso e contribuição. |
