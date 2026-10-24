@@ -17,16 +17,17 @@
 | P-007 | 2026-10-23 | Objetivos, membros, autorização por objetivo e progresso | API de objetivos/membros, 404/403, lock otimista/pessimista, progresso, 121 testes, Bruno `goals/` | [historico-de-prompts.md](historico-de-prompts.md#p-007--objetivos-membros-e-autorização-por-objetivo), [ADR-0001](../adr/0001-estrategia-multitenant.md#evidências-de-p-007) |
 | P-008 | 2026-10-23 | Contribuições e estornos | Registro, estorno, listagem paginada, 160 testes, Bruno `contributions/` | [historico-de-prompts.md](historico-de-prompts.md#p-008--contribuições-e-estornos), [ADR-0001](../adr/0001-estrategia-multitenant.md#evidências-de-p-008) |
 | P-009 | 2026-10-23 | Frontend de demonstração | React + Vite + TS, nginx no Compose, 21 testes de frontend, roteiro no navegador | [historico-de-prompts.md](historico-de-prompts.md#p-009--frontend-de-demonstração) |
+| P-010 | 2026-10-23 | Consolidação final | CI, roteiro de demonstração, ADR-0001 aceito, README e requisitos finais | [historico-de-prompts.md](historico-de-prompts.md#p-010--consolidação-final), [Consolidação final](#consolidação-final-p-010) |
 
 ## Indicadores acumulados
 
 | Indicador | Valor | Observação |
 |---|---|---|
-| Etapas registradas | 9 | P-001..P-009 |
-| Recomendações da IA decididas | 33 | 31 aceitas, 2 não adotadas (IA-01, IA-37) ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
+| Etapas registradas | 10 | P-001..P-010 (mais ajustes da P-009 e suporte entre etapas) |
+| Recomendações da IA decididas | 36 | 34 aceitas, 2 não adotadas (IA-01, IA-37) ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
 | Sugestões incorretas evidenciadas | 4 | SI-001 a SI-004 ([sugestoes-incorretas.md](sugestoes-incorretas.md)) |
-| Linhas de código produzidas | ≈ 8.480 | Até P-009: backend (Java de produção 2.595, Java de teste 2.567, SQL 298, shell 36), Bruno 1.045, frontend (código e CSS 1.465, testes 441, nginx/Dockerfile 35) (`wc -l`, inclui linhas em branco e comentários) |
-| Testes automatizados | 181 | Backend 160 (`./mvnw test`) e frontend 21 (`npm test`), todos passando em 2026-10-23 |
+| Linhas de código produzidas | ≈ 8.860 | Até P-010: Java de produção 2.595, Java de teste 2.567, SQL 331, shell 36, Bruno 1.045, frontend (código e CSS 1.583, testes 545), Dockerfiles, nginx, Compose e CI 159 (`wc -l`, inclui linhas em branco e comentários). Documentação: ≈ 2.920 linhas de Markdown |
+| Testes automatizados | 188 | Backend 160 (`./mvnw verify`) e frontend 28 (`npm test`), todos passando em 2026-10-23; mais 38 requisições Bruno contra o ambiente |
 
 ---
 
@@ -402,3 +403,92 @@ As alterações das mutações foram desfeitas; o arquivo restaurado foi compara
 - `MoneyInput` (centavos inteiros, máscara da direita para a esquerda) nos dois campos monetários;
   rótulos passaram de "Valor (R$)"/"Valor-alvo (R$)" para "Valor"/"Valor-alvo", já que o campo mostra o R$.
 - Verificado: `npm test` (28), lint e build; digitação real no navegador nos dois campos.
+
+---
+
+## Consolidação final (P-010)
+
+**Data:** 2026-10-23. **Ferramenta:** Claude Code, modelo Claude Opus 5.5 (todas as etapas), com a
+extensão Claude in Chrome nas verificações de interface.
+
+### Linha do tempo
+
+| Etapa | Entrega | PR |
+|---|---|---|
+| P-001 | Requisitos, decisões de negócio D-01..D-12, ADR-0001 proposto, registros de IA | #1 (com P-002) |
+| P-002 | Convenções de Git no `CLAUDE.md` | #1 |
+| P-003 | Monorepo, Compose, esquema com RLS forçada, vínculo do tenant à transação | #2 |
+| P-004 / P-005 | Repositório local, leitura do `.env`, avisos de inspeção | #2 |
+| P-006 | Login JWT, lookup `SECURITY DEFINER`, tenant do token, seeds | #3 |
+| P-007 | Objetivos, membros, autorização por objetivo, progresso | #4 |
+| P-008 | Contribuições e estornos | #5 |
+| P-009 (+3 ajustes) | Frontend de demonstração; layout, data e máscara de BRL | #6 |
+| P-010 | CI, roteiro de demonstração, ADR-0001 aceito, documentação final | — (esta branch) |
+
+### Números finais (medidos no repositório em 2026-10-23)
+
+| Indicador | Valor |
+|---|---|
+| Commits na `main` antes desta etapa | 69 (6 PRs mergeados) |
+| Testes automatizados | 188 (backend 160, frontend 28), todos passando |
+| Requisições Bruno | 38, todas passando num ambiente novo |
+| Testes de mutação registrados | 11 (P-003: 3; P-006: 2; P-007: 4; P-008: 2) |
+| Decisões de negócio e técnicas registradas | D-01..D-20, C-01, C-02, T-01, T-02 |
+| Recomendações da IA decididas | 36 (34 aceitas, 2 não adotadas) |
+| Sugestões incorretas ou inadequadas da IA | 4 (SI-001..SI-004) |
+
+### Verificação final executada
+
+| Verificação | Resultado |
+|---|---|
+| `./mvnw verify` | 160 testes, 0 falhas |
+| `npm ci`, `npm run lint`, `npm test`, `npm run build` | Sem avisos; 28 testes; build gerado |
+| `actionlint` 1.7.12 (Docker) no workflow da CI | 0 erros |
+| Ambiente novo e isolado (`docker compose -p vesta-verify`, volume próprio) | Healthy; script N-3 com a saída do roteiro; Bruno 38/38; login no navegador com os dados demo |
+| Links internos da documentação | 79 links em 13 arquivos, nenhum quebrado (arquivos e âncoras) |
+| Ambiente do usuário | Parado durante a verificação e religado com os dados preservados |
+
+A CI não foi executada no GitHub: isso só acontece depois do push, que fica a critério do usuário.
+
+### O que funcionou bem no uso da IA
+
+- **Perguntas em lotes pequenos, com recomendação:** 36 decisões tomadas assim, quase todas aceitas
+  na primeira rodada.
+- **Testes de mutação** como evidência de que os testes de segurança realmente detectam a falta da proteção.
+- **Verificação das APIs das bibliotecas nos jars e nos metadados oficiais** (Spring Boot 4, Hibernate 7,
+  Testcontainers 2, create-vite 9), em vez de confiar na memória.
+- **Documentação viva atualizada a cada etapa,** com registro honesto do que não foi feito.
+
+### O que a IA errou e como foi detectado
+
+| Registro | Erro | Quem detectou |
+|---|---|---|
+| SI-001 | Propôs instalar o JDK via `winget`, o que quebraria outro projeto da máquina | Usuário |
+| SI-002 | Expectativa errada no plano ("Carlos vê 4 objetivos") | IA, ao verificar |
+| SI-003 | Regra de exibição errada no plano (formulário do dono que não contribui) | IA, ao implementar |
+| SI-004 | Campos sobrepostos no frontend entregue | Usuário (captura de tela) |
+
+Problemas operacionais também registrados nas etapas, todos detectados pela IA:
+
+- testes que passaram pelo motivo errado (segredo vindo do `.env`);
+- README em UTF-16;
+- edições que não chegaram ao disco;
+- bloco `tests` do Bruno sem indentação;
+- `curl` sem UTF-8 no Git Bash;
+- `mvnw` sem permissão de execução.
+
+### Lições aprendidas
+
+1. Derivar resultados esperados das regras e dos seeds, nunca da memória (SI-002, SI-003).
+2. Verificação de interface inclui sobreposição e várias larguras, não só o fluxo (SI-004).
+3. Antes de ações destrutivas ou globais, conferir o ambiente do usuário: instalações (SI-001) e
+   dados locais (IA-49).
+4. Toda edição precisa de confirmação (ler a saída da ferramenta e rodar os testes) antes de ser dada como feita.
+5. Testes não podem depender do ambiente do desenvolvedor (`.env`).
+
+### O que a IA não fez
+
+- Não fez push nem abriu PRs: os 6 PRs foram abertos e mergeados pelo usuário.
+- Não executou a CI no GitHub.
+- Não escreveu testes de concorrência real nem testes ponta a ponta automatizados no navegador.
+- Não validou a interface em dispositivos reais: as larguras estreitas foram simuladas.

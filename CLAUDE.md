@@ -29,6 +29,9 @@ stack sem razão técnica relevante registrada em ADR. Pacote base: `com.vesta`.
 - Frontend: `cd frontend && npm ci && npm run lint && npm test && npm run build` (Node 22). A UI só
   esconde ações; toda regra continua no backend. Textos em português, código em inglês.
 - Ambiente: `docker compose up -d --build` (exige `.env`, copiado de `.env.example`).
+- CI: `.github/workflows/ci.yml` roda backend e frontend; mantenha os comandos dela iguais aos locais.
+- Demonstração: `docs/demonstracao.md` e `infra/demo/n3-rls-sem-where.sql`; atualize-os quando
+  regras ou dados demo mudarem.
 - Não instale nem altere JDK, Maven ou variáveis globais (`JAVA_HOME`, `PATH`) da máquina; ative o
   JDK 21 apenas na sessão do comando (ver `docs/setup-local.md`).
 - Migrations novas: toda tabela de negócio precisa de `family_id`, FKs compostas, RLS forçada,

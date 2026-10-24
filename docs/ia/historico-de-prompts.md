@@ -17,6 +17,7 @@
 | P-007 | 2026-10-23 | Objetivos, membros, autorização por objetivo e progresso (só leitura) | `backend/` (goal, family, V5), `bruno/goals`, `docker-compose.yml` (porta configurável), decisões D-14..D-16, ADR-0001, README, setup |
 | P-008 | 2026-10-23 | Contribuições e estornos (registro, estorno, listagem paginada) | `backend/` (contribution), `bruno/contributions`, decisões D-17..D-19, ADR-0001, README, setup |
 | P-009 | 2026-10-23 | Frontend de demonstração (React + Vite + TS) | `frontend/`, `docker-compose.yml` (serviço frontend), D-20, T-02, README, setup |
+| P-010 | 2026-10-23 | Consolidação final | `.github/workflows/ci.yml`, `infra/demo/`, `docs/demonstracao.md`, ADR-0001 aceito, requisitos (situação final), README final, report consolidado |
 
 ---
 
@@ -608,3 +609,33 @@ Faça as correções necessárias
 - **Verificação:** 28 testes de frontend (novos: `MoneyInput.test.tsx` e `parseCents`/`centsToAmount`);
   no navegador, digitação real: `123456` → R$ 1.234,56, dois Backspaces → R$ 12,34; no novo objetivo,
   `1200000` → R$ 12.000,00. Nada foi enviado durante a verificação.
+
+---
+
+## P-010 — Consolidação final
+
+- **Data:** 2026-10-23
+- **Ferramenta/modelo:** Claude Code, modelo Claude Opus 5.5. Planejamento em plan mode, implementação após aprovação.
+- **Branch:** `chore/p-010-consolidacao`, criada a partir da `main` (`3e806a0`, merge do PR #6) no repositório local.
+
+### Prompt
+
+```text
+aprovado e mergeado.
+Crie a nova branch e parta para a consideração final
+```
+
+### Respostas do usuário (todas as recomendações da IA)
+
+| Pergunta | Resposta |
+|---|---|
+| ADR-0001 | Passa a Aceito |
+| CI | GitHub Actions para backend e frontend |
+| Demonstração | Roteiro (`docs/demonstracao.md`) + script SQL do N-3 |
+
+### Resultado
+
+- CI com dois jobs, validada com `actionlint`; correção do `mvnw`, que estava sem permissão de execução no Git.
+- Script `infra/demo/n3-rls-sem-where.sql` e roteiro de demonstração com N-1..N-9 → demonstração e teste.
+- ADR-0001 aceito, com tabela de evidências finais e limitações; requisitos com situação final; README final.
+- Verificação completa num ambiente novo e isolado (detalhes no report).
