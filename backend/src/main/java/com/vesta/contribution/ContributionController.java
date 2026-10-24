@@ -29,4 +29,10 @@ public class ContributionController {
             @RequestBody RegisterContributionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(contributionService.register(goalId, request));
     }
+
+    @PostMapping("/{contributionId}/reversal")
+    public ContributionResponse reverse(@PathVariable UUID goalId, @PathVariable UUID contributionId,
+            @RequestBody ReverseContributionRequest request) {
+        return contributionService.reverse(goalId, contributionId, request);
+    }
 }

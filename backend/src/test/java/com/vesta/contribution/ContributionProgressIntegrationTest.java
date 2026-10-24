@@ -39,4 +39,17 @@ class ContributionProgressIntegrationTest extends ApiIntegrationTest {
                 .andExpect(jsonPath("$.contributionsByMember[?(@.userId == '%s')].amount".formatted(family.member()))
                         .value(75.50));
     }
+
+    @Test
+    void reversingRemovesTheAmountFromTheAccumulatedAndFromTheContributorTotal() throws Exception {
+        mockMvc.perform(post("/api/goals/{id}/contributions/{contribution}/reversal", family.sharedGoal(),
+                        family.ownerContribution())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(family, family.owner()))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"reason\": \"Lançado errado\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/goals/{id}", family.sharedGoal()).header(HttpHeaders.AUTHORIZATION, bearer(family, family.member())))
+                .andExpect(jsonPath("$.progress.accumulatedAmount").value(50.00))
+                .andExpect(jsonPath("$.contributionsByMember[?(@.userId == '%s')]".formatted(family.owner())).isEmpty());
+    }
 }

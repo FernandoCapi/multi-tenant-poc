@@ -16,6 +16,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import com.vesta.auth.InvalidCredentialsException;
+import com.vesta.contribution.ContributionNotFoundException;
 import com.vesta.contribution.InvalidContributionException;
 import com.vesta.family.FamilyMemberNotFoundException;
 import com.vesta.goal.GoalMemberNotFoundException;
@@ -79,6 +80,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     ProblemDetail handleConstraintViolation() {
         return invalidData();
+    }
+
+    @ExceptionHandler(ContributionNotFoundException.class)
+    ProblemDetail handleContributionNotFound() {
+        return problem(HttpStatus.NOT_FOUND, "Não encontrado", "Contribuição não encontrada.");
     }
 
     @ExceptionHandler(InvalidContributionException.class)

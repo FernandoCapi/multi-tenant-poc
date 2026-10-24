@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,17 +39,22 @@ public class ContributionService {
     /** "Today" for the not-in-the-future rule (D-18). */
     static final ZoneId BUSINESS_ZONE = ZoneId.of("America/Sao_Paulo");
 
+    private static final String ALREADY_REVERSED_MESSAGE = "Esta contribuição já foi estornada.";
+
     private final ContributionRepository contributionRepository;
+    private final ContributionReversalRepository reversalRepository;
     private final GoalAccessService accessService;
     private final GoalMemberRepository goalMemberRepository;
     private final UserRepository userRepository;
     private final RequestValidator requestValidator;
     private final Clock clock;
 
-    public ContributionService(ContributionRepository contributionRepository, GoalAccessService accessService,
+    public ContributionService(ContributionRepository contributionRepository,
+            ContributionReversalRepository reversalRepository, GoalAccessService accessService,
             GoalMemberRepository goalMemberRepository, UserRepository userRepository,
             RequestValidator requestValidator, Clock clock) {
         this.contributionRepository = contributionRepository;
+        this.reversalRepository = reversalRepository;
         this.accessService = accessService;
         this.goalMemberRepository = goalMemberRepository;
         this.userRepository = userRepository;
@@ -85,6 +91,37 @@ public class ContributionService {
         Contribution contribution = contributionRepository.save(new Contribution(goalId, contributorId,
                 currentUser, request.amount(), contributedOn, request.note(), clock.instant()));
         return toResponses(List.of(contribution), Map.of()).getFirst();
+    }
+
+    /**
+     * Owners reverse any contribution; members only those attributed to them (D-07). Only while the
+     * goal is ACTIVE (D-17), and at most once (D-13).
+     */
+    @Transactional
+    public ContributionResponse reverse(UUID goalId, UUID contributionId, ReverseContributionRequest request) {
+        UUID currentUser = CurrentUser.id();
+        GoalAccess access = accessService.requireVisibleForUpdate(goalId);
+        Contribution contribution = contributionRepository.findByIdAndGoalId(contributionId, goalId)
+                .orElseThrow(ContributionNotFoundException::new);
+        if (!contribution.getContributorId().equals(currentUser)) {
+            accessService.requireOwner(access);
+        }
+
+        requestValidator.validate(request);
+        requireActive(access, "Só contribuições de objetivos ativos podem ser estornadas.");
+        if (reversalRepository.existsByContributionId(contributionId)) {
+            throw new GoalStateConflictException(ALREADY_REVERSED_MESSAGE);
+        }
+
+        ContributionReversal reversal;
+        try {
+            reversal = reversalRepository.saveAndFlush(
+                    new ContributionReversal(contributionId, currentUser, request.reason(), clock.instant()));
+        } catch (DataIntegrityViolationException ex) {
+            // Concurrent reversal of the same contribution: the UNIQUE constraint decides (D-13)
+            throw new GoalStateConflictException(ALREADY_REVERSED_MESSAGE);
+        }
+        return toResponses(List.of(contribution), Map.of(contributionId, reversal)).getFirst();
     }
 
     private void requireParticipant(UUID goalId, UUID contributorId) {

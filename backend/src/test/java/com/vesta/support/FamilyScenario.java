@@ -23,14 +23,18 @@ public record FamilyScenario(
         UUID viewer,
         UUID outsider,
         UUID sharedGoal,
-        UUID privateGoal) {
+        UUID privateGoal,
+        UUID ownerContribution,
+        UUID memberContribution,
+        UUID reversedContribution) {
 
     private static final String PASSWORD_HASH =
             "{bcrypt}$2a$10$i5aGPYBayFksFaLp5mAxcOqfB5aUHpIMqrqXMb4TJ9bOnuh1r7Dgm";
 
     public static FamilyScenario create(String name) throws SQLException {
         FamilyScenario scenario = new FamilyScenario(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
-                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
         try (Connection owner = PostgresIntegrationTest.connectAsOwner()) {
             PostgresIntegrationTest.inTenantTransaction(owner, scenario.familyId(), connection -> {
                 scenario.insert(connection, name);
@@ -55,14 +59,13 @@ public record FamilyScenario(
         insertGoal(connection, privateGoal, "Aluguel " + name);
         insertMember(connection, privateGoal, owner, "OWNER", true);
 
-        insertContribution(connection, UUID.randomUUID(), owner, "100.00");
-        insertContribution(connection, UUID.randomUUID(), member, "50.00");
-        UUID reversed = UUID.randomUUID();
-        insertContribution(connection, reversed, member, "30.00");
+        insertContribution(connection, ownerContribution, owner, "100.00");
+        insertContribution(connection, memberContribution, member, "50.00");
+        insertContribution(connection, reversedContribution, member, "30.00");
         execute(connection,
                 "insert into contribution_reversals (family_id, contribution_id, reversed_by_id, reason) "
                         + "values (?, ?, ?, 'Valor errado')",
-                familyId, reversed, member);
+                familyId, reversedContribution, member);
     }
 
     private void insertUser(Connection connection, UUID id, String displayName) throws SQLException {

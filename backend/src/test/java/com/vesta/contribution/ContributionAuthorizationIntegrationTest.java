@@ -25,7 +25,7 @@ class ContributionAuthorizationIntegrationTest extends ApiIntegrationTest {
 
     enum Actor { OWNER, MEMBER, VIEWER, OUTSIDER, OTHER_FAMILY }
 
-    enum Action { REGISTER_OWN, REGISTER_FOR_OTHER }
+    enum Action { REGISTER_OWN, REGISTER_FOR_OTHER, REVERSE_OWN, REVERSE_OTHERS }
 
     private FamilyScenario family;
     private FamilyScenario otherFamily;
@@ -48,7 +48,18 @@ class ContributionAuthorizationIntegrationTest extends ApiIntegrationTest {
                 Arguments.of(Actor.MEMBER, Action.REGISTER_FOR_OTHER, 403),
                 Arguments.of(Actor.VIEWER, Action.REGISTER_FOR_OTHER, 403),
                 Arguments.of(Actor.OUTSIDER, Action.REGISTER_FOR_OTHER, 404),
-                Arguments.of(Actor.OTHER_FAMILY, Action.REGISTER_FOR_OTHER, 404));
+                Arguments.of(Actor.OTHER_FAMILY, Action.REGISTER_FOR_OTHER, 404),
+                // Own contribution: the contributor reverses it (the viewer has none of their own)
+                Arguments.of(Actor.OWNER, Action.REVERSE_OWN, 200),
+                Arguments.of(Actor.MEMBER, Action.REVERSE_OWN, 200),
+                Arguments.of(Actor.OUTSIDER, Action.REVERSE_OWN, 404),
+                Arguments.of(Actor.OTHER_FAMILY, Action.REVERSE_OWN, 404),
+                // Somebody else's contribution: owners only
+                Arguments.of(Actor.OWNER, Action.REVERSE_OTHERS, 200),
+                Arguments.of(Actor.MEMBER, Action.REVERSE_OTHERS, 403),
+                Arguments.of(Actor.VIEWER, Action.REVERSE_OTHERS, 403),
+                Arguments.of(Actor.OUTSIDER, Action.REVERSE_OTHERS, 404),
+                Arguments.of(Actor.OTHER_FAMILY, Action.REVERSE_OTHERS, 404));
     }
 
     @ParameterizedTest(name = "{0} {1} → {2}")
@@ -58,12 +69,26 @@ class ContributionAuthorizationIntegrationTest extends ApiIntegrationTest {
     }
 
     private MockHttpServletRequestBuilder request(Actor actor, Action action) {
+        if (action == Action.REVERSE_OWN || action == Action.REVERSE_OTHERS) {
+            return post("/api/goals/{id}/contributions/{contribution}/reversal", family.sharedGoal(),
+                    contributionFor(actor, action))
+                    .header(HttpHeaders.AUTHORIZATION, tokenOf(actor))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"reason\": \"Lançado errado\"}");
+        }
         UUID otherParticipant = actor == Actor.OWNER ? family.member() : family.owner();
         String contributor = action == Action.REGISTER_FOR_OTHER ? "\"" + otherParticipant + "\"" : "null";
         return post("/api/goals/{id}/contributions", family.sharedGoal())
                 .header(HttpHeaders.AUTHORIZATION, tokenOf(actor))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"amount\": 25.00, \"contributorId\": " + contributor + "}");
+    }
+
+    private UUID contributionFor(Actor actor, Action action) {
+        if (action == Action.REVERSE_OWN) {
+            return actor == Actor.OWNER ? family.ownerContribution() : family.memberContribution();
+        }
+        return actor == Actor.OWNER ? family.memberContribution() : family.ownerContribution();
     }
 
     private String tokenOf(Actor actor) {

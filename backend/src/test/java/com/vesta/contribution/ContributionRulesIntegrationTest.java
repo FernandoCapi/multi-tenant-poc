@@ -104,6 +104,62 @@ class ContributionRulesIntegrationTest extends ApiIntegrationTest {
         register(bearer(family, family.outsider()), "{\"amount\": -1}").andExpect(status().isNotFound());
     }
 
+    @Test
+    void reversalRecordsAuthorReasonAndTime() throws Exception {
+        reverse(owner, family.memberContribution(), "{\"reason\": \"Valor em duplicidade\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reversed").value(true))
+                .andExpect(jsonPath("$.reversal.reversedBy.id").value(family.owner().toString()))
+                .andExpect(jsonPath("$.reversal.reason").value("Valor em duplicidade"))
+                .andExpect(jsonPath("$.reversal.reversedAt").isNotEmpty());
+    }
+
+    @Test
+    void reversalNeedsAReason() throws Exception {
+        reverse(owner, family.memberContribution(), "{\"reason\": \" \"}").andExpect(status().isUnprocessableContent());
+        reverse(owner, family.memberContribution(), "{}").andExpect(status().isUnprocessableContent());
+    }
+
+    @Test
+    void aContributionIsReversedOnlyOnce() throws Exception {
+        reverse(owner, family.reversedContribution(), "{\"reason\": \"De novo\"}")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("Esta contribuição já foi estornada."));
+    }
+
+    @Test
+    void onlyActiveGoalsAcceptReversals() throws Exception {
+        // D-17: to correct a completed goal, reopen it first
+        mockMvc.perform(post("/api/goals/{id}/complete", family.sharedGoal()).header(HttpHeaders.AUTHORIZATION, owner))
+                .andExpect(status().isOk());
+        reverse(owner, family.memberContribution(), "{\"reason\": \"Correção\"}")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("Só contribuições de objetivos ativos podem ser estornadas."));
+
+        mockMvc.perform(post("/api/goals/{id}/reopen", family.sharedGoal()).header(HttpHeaders.AUTHORIZATION, owner))
+                .andExpect(status().isOk());
+        reverse(owner, family.memberContribution(), "{\"reason\": \"Correção\"}").andExpect(status().isOk());
+    }
+
+    @Test
+    void contributionOfAnotherGoalIsNotFound() throws Exception {
+        mockMvc.perform(post("/api/goals/{id}/contributions/{contribution}/reversal", family.privateGoal(),
+                        family.ownerContribution())
+                        .header(HttpHeaders.AUTHORIZATION, owner)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"reason\": \"x\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Contribuição não encontrada."));
+        reverse(owner, UUID.randomUUID(), "{\"reason\": \"x\"}").andExpect(status().isNotFound());
+    }
+
+    private ResultActions reverse(String token, UUID contributionId, String body) throws Exception {
+        return mockMvc.perform(post("/api/goals/{id}/contributions/{contribution}/reversal", family.sharedGoal(),
+                        contributionId)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body));
+    }
+
     private ResultActions register(String token, String body) throws Exception {
         return mockMvc.perform(post("/api/goals/{id}/contributions", family.sharedGoal())
                 .header(HttpHeaders.AUTHORIZATION, token)
