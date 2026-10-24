@@ -558,3 +558,24 @@ Mudança mergeada. Prossiga para a p-009
   registro e estorno de contribuição, transições de status e criação de objetivo; nginx no Compose.
 - 21 testes de frontend, lint e build verdes; smoke test do nginx; roteiro no navegador com os
   usuários Carlos e Pedro.
+
+---
+
+## P-009 (ajuste) — Colisão de campos na interface
+
+- **Data:** 2026-10-23
+- **Prompts:** *"me de um exemplo de acesso para testar o FE"* (a IA listou os usuários demo e o que
+  testar com cada um) e, em seguida, com uma captura de tela do detalhe da Parcela do carro:
+
+```text
+A UI simples é aceitável, mas ela não deve ter bugs visuais de colisão de campos
+Faça as correções necessárias
+```
+
+- **Diagnóstico da IA:** no formulário "Registrar contribuição", os `input` mantinham a largura
+  intrínseca do navegador dentro de colunas de grid de 160px, e os rótulos (itens do grid) não podiam
+  encolher. Por isso o Valor invadia a Data, a Observação invadia o botão e o botão quebrava em duas linhas.
+- **Resultado:** correção só de CSS (e um wrapper na tabela), commit
+  `fix(frontend): prevent form fields from overlapping`. A verificação por medição de geometria no
+  navegador encontrou e corrigiu um segundo defeito, não visível na captura: abaixo de ~600px, a
+  coluna do detalhe ficava mais larga que a tela.

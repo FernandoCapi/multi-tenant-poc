@@ -6,7 +6,7 @@
 
 ## Situação atual
 
-Até a etapa P-009 (2026-10-23): **3 sugestões incorretas ou inadequadas registradas** (SI-001, SI-002, SI-003).
+Até a etapa P-009 (2026-10-23): **4 sugestões incorretas ou inadequadas registradas** (SI-001 a SI-004).
 
 A recomendação não adotada em P-001 (IA-01, papel familiar + ACL) não entra aqui: foi uma
 preferência de modelagem do usuário, não um erro técnico.
@@ -75,3 +75,22 @@ Ver [decisoes-influenciadas-pela-ia.md](decisoes-influenciadas-pela-ia.md).
   `GoalDetailPage.test.tsx`; regra registrada na D-20.
 - **Aprendizado:** antes de escrever o roteiro de verificação de um plano, conferir cada expectativa
   contra a matriz de permissões e os seeds.
+
+### SI-004 — Campos sobrepostos no frontend entregue na P-009
+
+- **Data / etapa:** 2026-10-23, P-009 (relatado pelo usuário depois da entrega).
+- **Sugestão da IA:** o CSS do formulário de contribuição usava grid com colunas de no mínimo 160px
+  sem limitar a largura dos `input`/`select`; a verificação no navegador da P-009 foi feita só na
+  largura da janela maximizada e checou funcionalidade, não sobreposição.
+- **Problema:** os campos se sobrepunham (Valor sobre Data, Observação sobre o botão), o botão
+  quebrava em duas linhas e, abaixo de ~600px, a coluna do detalhe ultrapassava a tela.
+- **Evidência:** captura de tela enviada pelo usuário (detalhe da Parcela do carro); depois da
+  correção, medição de geometria no navegador (interseção de retângulos entre todos os controles e
+  elementos além da largura da página) sem nenhuma ocorrência em 1000, 600, 420 e 360px nas telas de
+  login, lista, detalhe (com estorno aberto) e novo objetivo.
+- **Decisão tomada:** controles a 100% da largura do rótulo com `min-width: 0`, altura uniforme,
+  botão do formulário em linha própria, `grid-template-columns: minmax(0, 1fr)` no detalhe, tabela
+  com rolagem própria e topo com quebra de linha.
+- **Aprendizado:** a verificação visual de uma tela precisa incluir checagem de sobreposição e mais de
+  uma largura, não só o fluxo funcional; a checagem por geometria em JavaScript funciona mesmo quando
+  a captura de tela ou o redimensionamento da janela não estão disponíveis.

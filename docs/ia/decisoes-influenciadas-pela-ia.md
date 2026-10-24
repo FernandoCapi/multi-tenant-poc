@@ -62,6 +62,7 @@
 | IA-42 | Token | `sessionStorage`, com CSP restritiva no nginx | Aceita | T-02 | P-009 |
 | IA-43 | Execução | Vite dev com proxy + serviço nginx no Compose | Aceita | T-02 | P-009 |
 | IA-44 | Regra de exibição | Formulário de contribuição também para o dono que não contribui (D-03); o plano dizia o contrário | Correção da IA durante a implementação | Ver SI-003 | P-009 |
+| IA-45 | Layout do frontend | CSS do formulário entregue na P-009 com campos sobrepostos | Incorreta | Ver SI-004; corrigido no mesmo branch | P-009 (ajuste) |
 
 ## Observações
 

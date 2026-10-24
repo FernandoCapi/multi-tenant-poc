@@ -24,7 +24,7 @@
 |---|---|---|
 | Etapas registradas | 9 | P-001..P-009 |
 | Recomendações da IA decididas | 33 | 31 aceitas, 2 não adotadas (IA-01, IA-37) ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
-| Sugestões incorretas evidenciadas | 3 | SI-001, SI-002, SI-003 ([sugestoes-incorretas.md](sugestoes-incorretas.md)) |
+| Sugestões incorretas evidenciadas | 4 | SI-001 a SI-004 ([sugestoes-incorretas.md](sugestoes-incorretas.md)) |
 | Linhas de código produzidas | ≈ 8.480 | Até P-009: backend (Java de produção 2.595, Java de teste 2.567, SQL 298, shell 36), Bruno 1.045, frontend (código e CSS 1.465, testes 441, nginx/Dockerfile 35) (`wc -l`, inclui linhas em branco e comentários) |
 | Testes automatizados | 181 | Backend 160 (`./mvnw test`) e frontend 21 (`npm test`), todos passando em 2026-10-23 |
 
@@ -367,3 +367,20 @@ As alterações das mutações foram desfeitas; o arquivo restaurado foi compara
 - Cenário da Ana (formulário só com o Carlos como contribuinte) verificado por teste de componente, não no navegador.
 - Testes ponta a ponta automatizados no navegador (ex.: Playwright).
 - Consolidação final (P-010). Sem push nem PR (não solicitados).
+
+---
+
+## P-009 (ajuste) — Colisão de campos na interface (2026-10-23)
+
+- **Relato do usuário:** campos sobrepostos no formulário de contribuição (captura de tela).
+- **O que a IA fez:** identificou a causa no CSS (largura intrínseca dos controles dentro de colunas de
+  grid estreitas), corrigiu em `styles.css` e no wrapper da tabela e verificou no navegador.
+- **Verificação:** a captura de tela automatizada falhou depois de redimensionar a janela (timeout do
+  Chrome). A IA trocou a abordagem por uma medição de geometria em JavaScript, simulando larguras
+  pela largura do `body`, já que o CSS não usa media queries. A medição achou um segundo defeito
+  (largura do detalhe em telas estreitas), corrigido e medido de novo: zero sobreposições e zero
+  elementos fora da página em 1000/600/420/360px nas telas de login, lista, detalhe (com estorno aberto)
+  e novo objetivo. Também uma captura em largura cheia da tela relatada, já corrigida.
+- `npm test` (21), `npm run lint` e `npm run build` verdes depois da correção.
+- **Limitação:** as larguras estreitas foram simuladas pela largura do `body`, e não por uma janela
+  realmente estreita; a captura de tela nessas larguras não foi possível.
