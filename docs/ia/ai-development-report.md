@@ -393,3 +393,12 @@ As alterações das mutações foram desfeitas; o arquivo restaurado foi compara
 - `max` no campo de data da contribuição, calculado em America/Sao_Paulo por `todayInSaoPaulo()`.
 - Verificado: `npm test` (23), lint e build; no navegador, data futura bloqueada pelo próprio formulário,
   sem requisição. A validação do backend (D-18) segue como autoridade.
+
+---
+
+## P-009 (ajuste 3) — Máscara de BRL nos campos monetários (2026-10-23)
+
+- Pedido do usuário: formatar valores em BRL durante a digitação.
+- `MoneyInput` (centavos inteiros, máscara da direita para a esquerda) nos dois campos monetários;
+  rótulos passaram de "Valor (R$)"/"Valor-alvo (R$)" para "Valor"/"Valor-alvo", já que o campo mostra o R$.
+- Verificado: `npm test` (28), lint e build; digitação real no navegador nos dois campos.

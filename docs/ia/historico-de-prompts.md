@@ -593,3 +593,18 @@ Faça as correções necessárias
   porque é naturalmente futura. O backend continua rejeitando datas futuras (422).
 - **Verificação:** 23 testes de frontend (2 novos: "hoje" em São Paulo e atributo `max` no formulário);
   no navegador, `max = 2026-10-23`, data 2026-10-24 → `rangeOverflow`, formulário inválido, 0 requisições POST.
+
+---
+
+## P-009 (ajuste 3) — Máscara de BRL nos campos monetários
+
+- **Data:** 2026-10-23
+- **Prompt:** *"Em todos os campos monetários, formate automaticamente para brl enquanto o usuário digita"*
+- **Resultado:** componente `MoneyInput` usado no valor da contribuição e no valor-alvo do novo objetivo
+  (os dois únicos campos monetários). Máscara no estilo calculadora: só dígitos contam e preenchem da
+  direita para a esquerda (`2550` → R$ 25,50); Backspace remove o último dígito; colar "R$ 1.234,56"
+  funciona; campo vazio continua vazio (o `required` segue valendo). O valor é mantido em centavos
+  inteiros e convertido para o decimal da API só no envio, sem aritmética de ponto flutuante na tela.
+- **Verificação:** 28 testes de frontend (novos: `MoneyInput.test.tsx` e `parseCents`/`centsToAmount`);
+  no navegador, digitação real: `123456` → R$ 1.234,56, dois Backspaces → R$ 12,34; no novo objetivo,
+  `1200000` → R$ 12.000,00. Nada foi enviado durante a verificação.
