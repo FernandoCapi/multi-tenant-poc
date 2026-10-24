@@ -140,13 +140,13 @@ Detalhado como requisitos de segurança RS-01 a RS-07 na [seção 5](#5-requisit
 
 | CA | Critério |
 |---|---|
-| CA-07.1 | Fluxos obrigatórios na interface: login, listagem dos objetivos autorizados, detalhe com progresso (acumulado, restante, excedente, percentual, total por membro), registro de contribuição. |
-| CA-07.2 | Todo texto apresentado ao usuário está em português; valores são exibidos em R$. |
-| CA-07.3 | A interface pode ocultar ações não permitidas, mas o backend é sempre a autoridade: toda regra é validada no servidor. |
-| CA-07.4 | Os erros 401, 403, 404, 409 e 422 são apresentados com mensagens compreensíveis em português. |
+| CA-07.1 | Fluxos obrigatórios na interface: login, listagem dos objetivos autorizados, detalhe com progresso (acumulado, restante, excedente, percentual, total por membro), registro de contribuição. **Testado (P-009):** `LoginPage.test.tsx`, `GoalDetailPage.test.tsx`; roteiro no navegador (P-009) |
+| CA-07.2 | Todo texto apresentado ao usuário está em português; valores são exibidos em R$. **Testado (P-009):** `format.test.ts` (R$ e datas pt-BR) |
+| CA-07.3 | A interface pode ocultar ações não permitidas, mas o backend é sempre a autoridade: toda regra é validada no servidor. **Testado (P-009):** `GoalDetailPage.test.tsx` (ações escondidas; o backend continua validando) |
+| CA-07.4 | Os erros 401, 403, 404, 409 e 422 são apresentados com mensagens compreensíveis em português. **Testado (P-009):** `client.test.ts`, `GoalDetailPage.test.tsx` (mensagem do backend exibida) |
 
-**Pendente de decisão:** se estorno, criação/edição de objetivo e gestão de membros também terão
-tela ou serão demonstrados apenas pela coleção Bruno.
+**Decidido em P-009 (D-20):** estorno, criação de objetivo e mudança de status têm tela; a gestão
+posterior de membros fica só na coleção Bruno.
 
 ## 5. Requisitos de segurança
 
@@ -245,7 +245,7 @@ Padrões adotados provisoriamente; detalhes em [decisoes-de-negocio.md](decisoes
 - ~~PV-04~~ Data da contribuição informada pelo usuário e não futura: **confirmado em P-008 (D-18)**.
 - ~~PV-05~~ Estorno como registro próprio, um por contribuição: **confirmado em P-003 (D-13)**.
 - ~~PV-06~~ Edição dos dados do objetivo apenas em status ATIVO: **confirmado em P-007 (D-16)**.
-- PV-07 Quais fluxos além dos obrigatórios terão tela (RF-07).
+- ~~PV-07~~ Quais fluxos além dos obrigatórios terão tela: **confirmado em P-009 (D-20)**.
 
 ## 10. Rastreabilidade
 
@@ -256,5 +256,5 @@ Padrões adotados provisoriamente; detalhes em [decisoes-de-negocio.md](decisoes
 | RF-03 | D-01, D-05, D-06, D-07 |
 | RF-04 | D-02, D-03, D-05, D-07, D-12, D-13, D-17, D-18, D-19 |
 | RF-05 | DT-04 |
-| RF-07 | D-10 |
+| RF-07 | D-10, D-20, T-02 |
 | RS-01..RS-07 | DT-02, DT-03, DT-04, DT-05, D-09, D-10 |

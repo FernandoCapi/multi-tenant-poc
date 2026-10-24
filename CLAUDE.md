@@ -26,6 +26,8 @@ stack sem razão técnica relevante registrada em ADR. Pacote base: `com.vesta`.
 
 - `backend/` (Spring Boot), `infra/postgres/init/` (roles), `bruno/`, `docs/`, `docker-compose.yml`.
 - Testes: `cd backend && ./mvnw verify` (exige Docker rodando e JDK 21 ativo na sessão).
+- Frontend: `cd frontend && npm ci && npm run lint && npm test && npm run build` (Node 22). A UI só
+  esconde ações; toda regra continua no backend. Textos em português, código em inglês.
 - Ambiente: `docker compose up -d --build` (exige `.env`, copiado de `.env.example`).
 - Não instale nem altere JDK, Maven ou variáveis globais (`JAVA_HOME`, `PATH`) da máquina; ative o
   JDK 21 apenas na sessão do comando (ver `docs/setup-local.md`).

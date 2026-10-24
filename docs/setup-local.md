@@ -7,7 +7,7 @@
 | JDK | 21 (Temurin 21.0.12.1+1 usado no desenvolvimento) | Só para build e testes fora do Docker. |
 | Docker + Docker Compose | Docker 29.x, Compose v5.x | O daemon precisa estar rodando: o Compose e os testes (Testcontainers) dependem dele. |
 | Maven | não é necessário instalar | O projeto usa o Maven Wrapper (`./mvnw`), fixado no Maven 3.10.0. |
-| Node.js | 20.19+ | Opcional, só para rodar a coleção Bruno pela CLI. |
+| Node.js | 22 (22.23 usado no desenvolvimento) | Para o frontend fora do Docker (`npm run dev`, testes) e para a coleção Bruno pela CLI. |
 
 O PostgreSQL roda **apenas em container** (`postgres:18.6`). Não é preciso instalá-lo na máquina.
 
@@ -122,6 +122,38 @@ o container. As variáveis `POSTGRES_*` não são lidas pelo backend: elas serve
 banco na imagem do Postgres. Nunca configure a aplicação para conectar como `app_owner` ou como
 superusuário, porque isso desligaria proteções do ADR-0001.
 
+## Frontend
+
+No Compose, o serviço `frontend` (nginx) publica o app em `http://localhost:${FRONTEND_PORT}`
+(padrão 3000) e repassa `/api` ao backend. Entre com um usuário demo (senha `vesta-demo`).
+
+Para desenvolver com recarga automática:
+
+```bash
+docker compose up -d postgres backend   # ou o backend pela IDE na porta 8080
+cd frontend
+npm ci
+npm run dev                             # http://localhost:5173, com proxy /api → localhost:8080
+```
+
+| Comando | O que faz |
+|---|---|
+| `npm test` | Testes (Vitest + Testing Library) |
+| `npm run lint` | Lint (oxlint) |
+| `npm run build` | Checagem de tipos (`tsc -b`) e build de produção |
+
+O token fica no `sessionStorage`: recarregar a página mantém a sessão, fechar a aba encerra. Um 401
+em qualquer chamada (ex.: token expirado depois de 60 minutos) leva de volta ao login.
+
+Roteiro de demonstração sugerido:
+
+| Quem | O que mostrar |
+|---|---|
+| Carlos | Lista com Viagem, Aluguel e Parcela do carro; na Viagem, registrar uma contribuição em nome do Pedro e estorná-la. |
+| Pedro | O Aluguel não aparece; abrir `/goals/a2000000-0000-0000-0000-000000000002` mostra "Objetivo não encontrado." (N-4); na Viagem, sem botões de dono e com "Estornar" só nas próprias contribuições. |
+| Ana | Na Parcela do carro (dona, sem contribuir), o formulário só oferece o Carlos como contribuinte. |
+| Marcos | Só vê a Reforma da cozinha (Família Souza). |
+
 ## Testes
 
 ```bash
@@ -151,6 +183,10 @@ Compose. Não dependem do banco do Compose nem do `.env`, mas exigem o Docker ro
 | `ContributionRulesIntegrationTest` | Valor, data (não futura, fuso de São Paulo), contribuinte válido, objetivo ativo, estorno com motivo e único. |
 | `ContributionListingIntegrationTest` | Listagem paginada, estornadas sinalizadas, soma igual ao acumulado, sem edição nem exclusão. |
 | `ContributionProgressIntegrationTest` | Registrar e estornar refletem no progresso e no total por membro. |
+
+No frontend (`cd frontend && npm test`): `client.test.ts` (token, erros e 401), `format.test.ts`,
+`LoginPage.test.tsx`, `GoalDetailPage.test.tsx` (ações exibidas conforme papel, contribui e status) e
+`NewGoalPage.test.tsx`.
 
 ## Inspecionar o banco
 
