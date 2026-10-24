@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ApiError, api } from '../api/client'
-import type { ContributionPage, GoalDetail } from '../api/types'
+import type { Contribution, ContributionPage, GoalDetail } from '../api/types'
+import { useAuth } from '../auth/useAuth'
+import { ContributionForm } from '../components/ContributionForm'
 import { ContributionsTable } from '../components/ContributionsTable'
+import { GoalActions } from '../components/GoalActions'
+import { ReverseDialog } from '../components/ReverseDialog'
 import { ProgressBar } from '../components/ProgressBar'
 import { ROLE_LABELS, STATUS_LABELS, formatDate, formatMoney } from '../format'
 
@@ -14,6 +18,10 @@ export function GoalDetailPage() {
   const [contributions, setContributions] = useState<ContributionPage | null>(null)
   const [page, setPage] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
+  const reload = useCallback(() => setReloadKey((key) => key + 1), [])
+  const { me } = useAuth()
+
   useEffect(() => {
     let active = true
     Promise.all([api.getGoal(goalId), api.listContributions(goalId, page, CONTRIBUTIONS_PAGE_SIZE)])
@@ -33,7 +41,7 @@ export function GoalDetailPage() {
     return () => {
       active = false
     }
-  }, [goalId, page])
+  }, [goalId, page, reloadKey])
 
   if (error && !goal) {
     return (
@@ -43,9 +51,16 @@ export function GoalDetailPage() {
       </section>
     )
   }
-  if (!goal || !contributions) {
+  if (!goal || !contributions || !me) {
     return <p>Carregando…</p>
   }
+
+  // Only hides what the backend would reject anyway (CA-07.3)
+  const active = goal.status === 'ACTIVE'
+  const isOwner = goal.myRole === 'OWNER'
+  const canRegister = active && (goal.iContribute || isOwner)
+  const canReverse = (contribution: Contribution) =>
+    active && !contribution.reversed && (isOwner || contribution.contributor.id === me.id)
 
   return (
     <section className="detail">
@@ -61,6 +76,7 @@ export function GoalDetailPage() {
       </p>
       {goal.description && <p>{goal.description}</p>}
       {error && <p role="alert" className="error">{error}</p>}
+      <GoalActions goal={goal} onChanged={reload} />
 
       <div className="card">
         <h2>Progresso</h2>
@@ -104,7 +120,16 @@ export function GoalDetailPage() {
 
       <div className="card">
         <h2>Contribuições</h2>
-        <ContributionsTable page={contributions} onPageChange={setPage} />
+        {canRegister && <ContributionForm goal={goal} currentUserId={me.id} onRegistered={reload} />}
+        <ContributionsTable
+          page={contributions}
+          onPageChange={setPage}
+          renderAction={(contribution) =>
+            canReverse(contribution) && (
+              <ReverseDialog goalId={goal.id} contribution={contribution} onReversed={reload} />
+            )
+          }
+        />
       </div>
     </section>
   )

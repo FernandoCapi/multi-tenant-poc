@@ -305,6 +305,29 @@ textarea {
   margin-top: 4px;
 }
 
+.inline-form {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  align-items: end;
+  margin-bottom: var(--space);
+}
+
+.reverse-form {
+  display: grid;
+  gap: 6px;
+  min-width: 200px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.button.small {
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+
 .pager {
   display: flex;
   align-items: center;
