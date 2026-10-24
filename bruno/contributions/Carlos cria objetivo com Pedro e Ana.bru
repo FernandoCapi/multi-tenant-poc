@@ -1,0 +1,38 @@
+meta {
+  name: Carlos cria objetivo com Pedro e Ana
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/goals
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carlosToken}}
+}
+
+body:json {
+  {
+    "title": "Presente do Dia das Mães",
+    "targetAmount": 300.00,
+    "members": [
+      {"userId": "{{childId}}", "role": "MEMBER", "contributes": true},
+      {"userId": "{{spouseId}}", "role": "MEMBER", "contributes": false}
+    ]
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("contributionGoalId", res.body.id);
+}
+
+docs {
+  Ana vê o objetivo, mas não participa financeiramente (contributes = false).
+}

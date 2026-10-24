@@ -1,0 +1,33 @@
+meta {
+  name: Carlos registra para Pedro
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/goals/{{contributionGoalId}}/contributions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carlosToken}}
+}
+
+body:json {
+  {
+    "amount": 30.00,
+    "contributorId": "{{childId}}",
+    "note": "Registrado pelo pai"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.registeredBy.displayName: eq Carlos
+  res.body.contributor.displayName: eq Pedro
+}
+
+docs {
+  D-03: o dono registra em nome de um participante; contribuinte e registrado por ficam distintos.
+}

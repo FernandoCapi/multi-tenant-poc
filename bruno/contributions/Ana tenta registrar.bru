@@ -1,0 +1,30 @@
+meta {
+  name: Ana tenta registrar
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/goals/{{contributionGoalId}}/contributions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{anaToken}}
+}
+
+body:json {
+  {
+    "amount": 10.00
+  }
+}
+
+assert {
+  res.status: eq 403
+  res.body.detail: eq "Você não tem permissão para esta ação."
+}
+
+docs {
+  Cenário N-6: Ana vê o objetivo, mas não participa financeiramente.
+}

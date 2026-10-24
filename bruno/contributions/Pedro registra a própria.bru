@@ -1,0 +1,38 @@
+meta {
+  name: Pedro registra a própria
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/goals/{{contributionGoalId}}/contributions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{pedroToken}}
+}
+
+body:json {
+  {
+    "amount": 50.00,
+    "note": "Mesada de novembro"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.reversed: eq false
+}
+
+script:post-response {
+  bru.setVar("pedroContributionId", res.body.id);
+}
+
+tests {
+  test("contribuinte e registrado por são o Pedro", function() {
+    expect(res.body.contributor.id).to.equal(bru.getEnvVar("childId"));
+    expect(res.body.registeredBy.id).to.equal(bru.getEnvVar("childId"));
+  });
+}

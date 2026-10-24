@@ -1,0 +1,29 @@
+meta {
+  name: Pedro tenta estornar a do Carlos
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/goals/{{contributionGoalId}}/contributions/{{carlosContributionId}}/reversal
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{pedroToken}}
+}
+
+body:json {
+  {
+    "reason": "Não fui eu"
+  }
+}
+
+assert {
+  res.status: eq 403
+}
+
+docs {
+  Membro só estorna as próprias contribuições; as dos outros, só o dono (D-07).
+}
