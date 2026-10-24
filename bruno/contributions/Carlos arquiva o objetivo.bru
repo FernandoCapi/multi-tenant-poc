@@ -1,0 +1,24 @@
+meta {
+  name: Carlos arquiva o objetivo
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/api/goals/{{contributionGoalId}}/archive
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carlosToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq ARCHIVED
+}
+
+docs {
+  Objetivos com contribuições não podem ser excluídos; arquivar deixa a listagem padrão limpa para a próxima execução.
+}

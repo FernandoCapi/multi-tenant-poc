@@ -7,10 +7,10 @@ famílias (tenants) e controle de acesso por objetivo dentro de cada família.
 A POC também documenta como o Claude Code apoiou análise, arquitetura, implementação, testes,
 revisão e documentação.
 
-> **Estado atual (P-007):** fundação, autenticação e objetivos prontos: esquema com Row-Level
-> Security forçada, login com JWT, tenant vindo do token, API de objetivos e membros com autorização
-> por objetivo, progresso financeiro (só leitura), duas famílias de demonstração e testes
-> automatizados de isolamento. Ainda não há registro de contribuições (P-008) nem frontend (P-009).
+> **Estado atual (P-008):** backend completo da POC: esquema com Row-Level Security forçada, login
+> com JWT, tenant vindo do token, objetivos e membros com autorização por objetivo, contribuições e
+> estornos imutáveis, progresso financeiro, duas famílias de demonstração e testes automatizados de
+> isolamento. Ainda não há frontend (P-009).
 
 ## API disponível
 
@@ -27,6 +27,9 @@ revisão e documentação.
 | `POST /api/goals/{id}/members` | dono | Adiciona membro da família (`userId`, `role`, `contributes`) |
 | `PATCH /api/goals/{id}/members/{userId}` | dono | Papel e/ou participação financeira |
 | `DELETE /api/goals/{id}/members/{userId}` | dono, ou o próprio membro (sair) | O último dono não sai |
+| `GET /api/goals/{id}/contributions?page=&size=` | vinculados | Contribuições paginadas, mais recentes primeiro, estornadas sinalizadas |
+| `POST /api/goals/{id}/contributions` | participante (a própria) ou dono (para participante) | `{amount, contributedOn?, note?, contributorId?}`; só objetivos ativos |
+| `POST /api/goals/{id}/contributions/{contributionId}/reversal` | o contribuinte ou o dono | `{reason}`; só objetivos ativos; uma vez por contribuição |
 | `GET /api/family/members` | token | Membros da família do usuário |
 | `GET /actuator/health` | público | Saúde da aplicação |
 
@@ -58,6 +61,7 @@ backend/                 API Spring Boot (pacote com.vesta)
   src/main/java/com/vesta/user/     entidade User e /api/me
   src/main/java/com/vesta/family/   entidade Family
   src/main/java/com/vesta/goal/     objetivos, membros, autorização por objetivo e progresso
+  src/main/java/com/vesta/contribution/  contribuições e estornos (imutáveis)
   src/main/resources/db/migration/  migrations Flyway (esquema, RLS, privilégios, lookup de login)
   src/main/resources/db/seed/       famílias de demonstração (só no perfil local)
   src/test/java/com/vesta/          testes de isolamento, autenticação e dados demo

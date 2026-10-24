@@ -218,7 +218,14 @@ Implementado em P-007:
 | Totais restritos aos objetivos visíveis, sem estornos | `goal/GoalContributionQueries.java`, `goal/GoalProgress.java` |
 | Lock otimista | `V5__add_goal_version.sql`, `@Version` em `Goal` |
 
-Ainda não implementado: registro e estorno de contribuições (P-008).
+Implementado em P-008:
+
+| Elemento | Onde |
+|---|---|
+| Entidades insert-only (`@Immutable`), coerentes com os grants só de `SELECT`/`INSERT` | `contribution/Contribution.java`, `contribution/ContributionReversal.java` |
+| Registro, estorno e listagem com a mesma ordem 404 → 403 → 422 → 409 | `contribution/ContributionService.java` |
+| Lock da linha do objetivo em registro e estorno (serializa com concluir e arquivar) | `GoalAccessService.requireVisibleForUpdate` |
+| Estorno concorrente: o `UNIQUE` do banco decide, e a violação vira 409 | `ContributionService.reverse` |
 
 ## Evidências
 
@@ -293,6 +300,28 @@ individual do Pedro); Pedro não vê o Aluguel e recebe 404 nele (N-4) e 403 ao 
 Marcos recebe 404 na Viagem da Silva (N-1); acumulado da Viagem = 3.450,00, sem o estorno de 300.
 A concorrência real entre dois donos saindo ao mesmo tempo não foi testada; a proteção é o lock pessimista.
 
+### Evidências de P-008
+
+**Suíte `./mvnw test`:** 160 testes, 0 falhas.
+
+| Classe (nova) | Testes | Cobre |
+|---|---|---|
+| `ContributionAuthorizationIntegrationTest` | 19 | Registrar a própria, registrar para outro, estornar a própria e a de outro × DONO, MEMBRO, MEMBRO sem contribuir, sem vínculo, outra família (N-1, N-4, N-6). |
+| `ContributionRulesIntegrationTest` | 12 | Dono registra para participante; data padrão = hoje em São Paulo; data futura, valor, casas e nota → 422; contribuinte sem `contributes` ou fora do objetivo → 422; objetivo concluído/arquivado → 409 (N-7); estorno com autor e motivo, sem motivo → 422, duplicado → 409, só em ATIVO (D-17); contribuição de outro objetivo → 404; 403/404 antes do 422. |
+| `ContributionListingIntegrationTest` | 6 | Todos os vinculados veem tudo, com estornadas sinalizadas; soma das não estornadas = acumulado; ordem e paginação; `size` limitado a 100; `page` inválida → 422; sem acesso → 404; sem edição nem exclusão. |
+| `ContributionProgressIntegrationTest` | 2 | Registrar soma ao acumulado e ao total do membro; estornar subtrai. |
+
+**Testes de mutação** (desfeitos, sem commit):
+
+| Alteração | Resultado |
+|---|---|
+| Ignorar `contributes` no registro da própria | 2 testes falharam (matriz N-6 e "permissão antes do corpo"). |
+| Estorno sem checar o status do objetivo | 1 teste falhou (`onlyActiveGoalsAcceptReversals`). |
+
+**Ambiente Compose:** Pedro registrou 50,00 na Viagem (3.450,00 → 3.500,00) e estornou (→ 3.450,00);
+Ana recebeu 403 ao registrar na Parcela do carro (N-6); texto com acentos enviado em UTF-8 foi
+gravado e devolvido sem alteração.
+
 ## Consequências
 
 - O isolamento entre famílias depende de três camadas independentes (aplicação, persistência, RLS) e
@@ -305,4 +334,5 @@ A concorrência real entre dois donos saindo ao mesmo tempo não foi testada; a 
   lookup de login ainda faltam. Situação em P-006: RS-03 e o lookup de login têm evidência, e RS-04
   também pela API em `/api/me`. Faltam RS-01 pela API nos endpoints de objetivos e contribuições, e RS-02.
   Situação em P-007: RS-01 pela API e RS-02 têm evidência para objetivos e membros; faltam os
-  endpoints de contribuições (P-008).
+  endpoints de contribuições (P-008). Situação em P-008: RS-01..RS-07 têm evidência em todos os
+  endpoints de negócio; a mudança do status para Aceito fica para a consolidação (P-010).

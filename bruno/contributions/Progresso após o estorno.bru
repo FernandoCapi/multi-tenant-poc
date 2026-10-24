@@ -1,0 +1,25 @@
+meta {
+  name: Progresso após o estorno
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/api/goals/{{contributionGoalId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{anaToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.progress.accumulatedAmount: eq 50
+  res.body.progress.remainingAmount: eq 250
+}
+
+docs {
+  30 (Carlos para Pedro) + 20 (Carlos); os 50 estornados do Pedro não contam.
+}

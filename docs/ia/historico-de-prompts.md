@@ -15,6 +15,7 @@
 | P-005 | 2026-10-22 | Avisos de inspeção na entidade `Goal` | `backend/src/main/java/com/vesta/goal/Goal.java` |
 | P-006 | 2026-10-22 | Planejamento das próximas etapas e implementação da autenticação, do tenant vindo do JWT e dos seeds | `backend/` (auth, tenant, user, family, V4, seed), `infra/postgres/init`, `bruno/auth`, ADR-0001, ADR-0002, `docs/setup-local.md`, README |
 | P-007 | 2026-10-23 | Objetivos, membros, autorização por objetivo e progresso (só leitura) | `backend/` (goal, family, V5), `bruno/goals`, `docker-compose.yml` (porta configurável), decisões D-14..D-16, ADR-0001, README, setup |
+| P-008 | 2026-10-23 | Contribuições e estornos (registro, estorno, listagem paginada) | `backend/` (contribution), `bruno/contributions`, decisões D-17..D-19, ADR-0001, README, setup |
 
 ---
 
@@ -480,3 +481,48 @@ O trabalho foi retomado no ponto em que estava: a atualização da documentaçã
   repetível) verificados.
 - A porta 5432 estava ocupada por um banco de outro projeto do usuário. A IA não mexeu nele e tornou
   a porta do Vesta configurável (`POSTGRES_PORT`, padrão 5432; 5433 neste ambiente).
+
+---
+
+## Entre P-007 e P-008 — Acesso ao banco pelo DBeaver
+
+- **Data:** 2026-10-23
+- **Prompts (resumo):** o usuário não conseguia conectar pelo DBeaver em `localhost:5432` ("Connection
+  refused") e depois perguntou qual era o acesso de superusuário para ver todos os registros.
+- **Resposta da IA:** a porta do Vesta neste ambiente é 5433 (`POSTGRES_PORT`, definida na P-007 por
+  causa do banco de outro projeto na 5432). Com `app_user`, as tabelas aparecem vazias por causa da
+  RLS, a menos que `set_config('app.tenant_id', ...)` seja executado na transação. O superusuário de
+  bootstrap (`postgres` / `postgres-dev`, do `.env`) ignora a RLS e serve só para inspeção, nunca
+  para validar o isolamento nem para a aplicação.
+- Sem alteração de código.
+
+---
+
+## P-008 — Contribuições e estornos
+
+- **Data:** 2026-10-23
+- **Ferramenta/modelo:** Claude Code, modelo Claude Opus 5.5. Planejamento em plan mode, implementação após aprovação.
+- **Branch:** `feat/p-008-contribuicoes`, criada a partir da `main` (`c2d51c5`, merge do PR #4) no repositório local.
+
+### Prompt
+
+```text
+Mudança aprovada e mergeada. Crie a nova branch e prossiga com a mudança sequente
+```
+
+### Respostas do usuário
+
+| Pergunta | Resposta |
+|---|---|
+| PV-01 — estorno em quais status | Só em ATIVO (recomendação da IA) → D-17 |
+| PV-04 — data da contribuição | Informada, não futura (recomendação da IA) → D-18 |
+| Listagem de contribuições | **Paginada** (a IA recomendava lista completa) → D-19 |
+| Quem vê as contribuições | Todos os vinculados (recomendação da IA) |
+
+### Resultado
+
+- Registro (próprio ou pelo dono para um participante), estorno (pelo contribuinte ou pelo dono) e
+  listagem paginada, com a ordem 404 → 403 → 422 → 409, lock da linha do objetivo e entidades
+  insert-only.
+- 160 testes passando; 2 testes de mutação; ambiente Compose e coleção Bruno (38/38 requisições, duas
+  execuções seguidas) verificados.

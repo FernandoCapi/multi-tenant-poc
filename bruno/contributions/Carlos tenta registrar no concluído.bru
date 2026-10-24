@@ -1,0 +1,30 @@
+meta {
+  name: Carlos tenta registrar no concluído
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/api/goals/{{contributionGoalId}}/contributions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{carlosToken}}
+}
+
+body:json {
+  {
+    "amount": 10.00
+  }
+}
+
+assert {
+  res.status: eq 409
+  res.body.detail: eq "Só objetivos ativos recebem contribuições."
+}
+
+docs {
+  Cenário N-7: objetivo concluído não recebe contribuições.
+}

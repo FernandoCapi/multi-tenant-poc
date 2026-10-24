@@ -1,0 +1,27 @@
+meta {
+  name: Pedro estorna a própria
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/goals/{{contributionGoalId}}/contributions/{{pedroContributionId}}/reversal
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{pedroToken}}
+}
+
+body:json {
+  {
+    "reason": "Valor digitado errado"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.reversed: eq true
+  res.body.reversal.reason: eq "Valor digitado errado"
+}

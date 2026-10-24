@@ -15,16 +15,17 @@
 | P-005 | 2026-10-22 | Análise de avisos de inspeção | Falsos positivos de JPA suprimidos pontualmente, com justificativa | [historico-de-prompts.md](historico-de-prompts.md#p-005--avisos-de-inspeção-na-entidade-goal) |
 | P-006 | 2026-10-22 | Roadmap P-006..P-010 e autenticação | Login JWT, lookup `SECURITY DEFINER`, tenant do token, `/api/me`, seeds, 56 testes, Bruno `auth/` | [historico-de-prompts.md](historico-de-prompts.md#p-006--roadmap-e-autenticação), [ADR-0002](../adr/0002-autenticacao-jwt.md) |
 | P-007 | 2026-10-23 | Objetivos, membros, autorização por objetivo e progresso | API de objetivos/membros, 404/403, lock otimista/pessimista, progresso, 121 testes, Bruno `goals/` | [historico-de-prompts.md](historico-de-prompts.md#p-007--objetivos-membros-e-autorização-por-objetivo), [ADR-0001](../adr/0001-estrategia-multitenant.md#evidências-de-p-007) |
+| P-008 | 2026-10-23 | Contribuições e estornos | Registro, estorno, listagem paginada, 160 testes, Bruno `contributions/` | [historico-de-prompts.md](historico-de-prompts.md#p-008--contribuições-e-estornos), [ADR-0001](../adr/0001-estrategia-multitenant.md#evidências-de-p-008) |
 
 ## Indicadores acumulados
 
 | Indicador | Valor | Observação |
 |---|---|---|
-| Etapas registradas | 7 | P-001..P-007 |
-| Recomendações da IA decididas | 25 | 24 aceitas, 1 não adotada ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
+| Etapas registradas | 8 | P-001..P-008 |
+| Recomendações da IA decididas | 29 | 27 aceitas, 2 não adotadas (IA-01, IA-37) ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
 | Sugestões incorretas evidenciadas | 2 | SI-001, SI-002 ([sugestoes-incorretas.md](sugestoes-incorretas.md)) |
-| Linhas de código produzidas | ≈ 5.090 | Até P-007: Java de produção 2.041, Java de teste 2.095, SQL 298, shell 36, Bruno 616 (`wc -l`, inclui linhas em branco e comentários) |
-| Testes automatizados | 121 | Todos passando em 2026-10-23 (`./mvnw test`) |
+| Linhas de código produzidas | ≈ 6.540 | Até P-008: Java de produção 2.595, Java de teste 2.567, SQL 298, shell 36, Bruno 1.045 (`wc -l`, inclui linhas em branco e comentários) |
+| Testes automatizados | 160 | Todos passando em 2026-10-23 (`./mvnw test`) |
 
 ---
 
@@ -258,4 +259,62 @@ As alterações das mutações foram desfeitas; o arquivo restaurado foi compara
 - Teste de concorrência real (dois donos saindo ao mesmo tempo): a proteção é o lock pessimista,
   sem teste dedicado.
 - Registro e estorno de contribuições, e a restrição "quem não contribui não registra" (P-008).
+- Sem push nem PR (não solicitados).
+
+---
+
+## Entre P-007 e P-008 — Suporte ao DBeaver (2026-10-23)
+
+- Diagnóstico da conexão recusada (porta 5433 em vez de 5432) e orientação sobre `app_user` (RLS) e
+  superusuário (só inspeção). Sem alteração de código. Detalhes no histórico de prompts.
+
+---
+
+## P-008 — Contribuições e estornos (2026-10-23)
+
+**Ferramenta:** Claude Code, modelo Claude Opus 5.5.
+
+### O que a IA fez
+
+- Fez 4 perguntas; 3 recomendações foram aceitas e 1 não foi adotada (paginação, IA-37).
+- Implementou:
+  - entidades insert-only de contribuição e estorno;
+  - registro (próprio e em nome de outro), estorno e listagem paginada;
+  - a regra "quem não contribui não registra" (N-6);
+  - objetivo não ativo rejeitando registro e estorno (N-7, D-17);
+  - data não futura no fuso de São Paulo (D-18);
+  - cenários Bruno de contribuições.
+- O progresso da P-007 passou a refletir registros e estornos sem nenhuma alteração.
+
+### Verificações executadas (saídas lidas)
+
+| Verificação | Resultado |
+|---|---|
+| `./mvnw test` | 160 testes, 0 falhas |
+| Mutação: ignorar `contributes` | 2 testes falharam |
+| Mutação: estorno sem checar status | 1 teste falhou |
+| Compose, Viagem | 3.450,00 → registro de 50,00 → 3.500,00 → estorno → 3.450,00 |
+| Compose, N-6 | Ana → 403 ao registrar na Parcela do carro |
+| Compose, UTF-8 | Texto com acentos enviado por um cliente em UTF-8 voltou idêntico (comparação `True`) |
+| Compose, fuso | Contribuição às 00:37 UTC do dia 24 registrada com data 23 (21:37 em São Paulo) |
+| Bruno CLI 4.3.0, duas execuções | 38/38 requisições, 72/72 asserções, 4/4 testes nas duas |
+
+### Problemas encontrados durante a etapa
+
+- **Acentos via `curl` no Git Bash:** a verificação manual com "Verificação" no argumento do `curl`
+  retornou 400, porque o shell não enviou UTF-8. A IA não tratou isso como erro da API: repetiu o
+  teste com um cliente que envia UTF-8 de fato e confirmou o round-trip. A dica foi adicionada à
+  solução de problemas do `setup-local.md`.
+- **Arquivos Bruno gerados com o bloco `tests` sem indentação:** o parser do Bruno descartou a
+  requisição, e duas outras falharam por consequência. Corrigido no gerador e verificado com duas
+  execuções completas.
+- **Resíduos na base demo:** as verificações manuais deixaram duas contribuições estornadas na Viagem
+  (sem efeito no acumulado). A primeira execução do Bruno, que falhou, e as duas seguintes deixaram
+  três objetivos arquivados.
+
+### O que não foi feito nesta etapa
+
+- Teste de concorrência real (dois estornos ou registro e conclusão simultâneos): a proteção é o lock
+  da linha do objetivo e o `UNIQUE` do banco, sem teste dedicado.
+- Frontend (P-009) e consolidação (P-010).
 - Sem push nem PR (não solicitados).

@@ -1,0 +1,26 @@
+meta {
+  name: Ana lista as contribuições
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/goals/{{contributionGoalId}}/contributions?page=0&size=2
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{anaToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.totalElements: eq 3
+  res.body.size: eq 2
+  res.body.totalPages: eq 2
+}
+
+docs {
+  Quem não contribui vê todas as contribuições, inclusive as estornadas (CA-03.7, D-19).
+}
