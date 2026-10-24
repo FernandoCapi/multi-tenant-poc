@@ -305,6 +305,32 @@ textarea {
   margin-top: 4px;
 }
 
+.members-fieldset {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.members-fieldset .muted {
+  margin: 0;
+}
+
+.member-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.form label.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
+
 .inline-form {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   align-items: end;

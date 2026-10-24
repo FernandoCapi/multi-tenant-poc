@@ -6,6 +6,7 @@ import { Layout } from './components/Layout'
 import { GoalDetailPage } from './pages/GoalDetailPage'
 import { GoalsPage } from './pages/GoalsPage'
 import { LoginPage } from './pages/LoginPage'
+import { NewGoalPage } from './pages/NewGoalPage'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { me, loading } = useAuth()
@@ -29,6 +30,7 @@ export function AppRoutes() {
       <Route element={<Layout />}>
         <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
         <Route path="/" element={<RequireAuth><GoalsPage /></RequireAuth>} />
+        <Route path="/goals/new" element={<RequireAuth><NewGoalPage /></RequireAuth>} />
         <Route path="/goals/:goalId" element={<RequireAuth><GoalDetailPage /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
