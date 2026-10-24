@@ -57,10 +57,10 @@ política da [seção 7](#7-política-de-respostas-de-erro).
 
 | CA | Critério |
 |---|---|
-| CA-01.1 | Dado um usuário semeado, quando faz login com credenciais válidas, então recebe um JWT que identifica o usuário (`sub`) e o tenant resolvido pelo servidor. |
-| CA-01.2 | Todo usuário está vinculado a exatamente uma família (garantido por restrição no banco). |
-| CA-01.3 | Não existe endpoint de cadastro de família ou de usuário. |
-| CA-01.4 | Os seeds criam pelo menos duas famílias, com membros suficientes para todos os cenários da [seção 8](#8-cenários-de-demonstração). |
+| CA-01.1 | Dado um usuário semeado, quando faz login com credenciais válidas, então recebe um JWT que identifica o usuário (`sub`) e o tenant resolvido pelo servidor. **Evidência (P-010):** `LoginIntegrationTest`, `DemoDataIntegrationTest` |
+| CA-01.2 | Todo usuário está vinculado a exatamente uma família (garantido por restrição no banco). **Evidência (P-010):** `users.family_id NOT NULL` + FK (V1); `RowLevelSecurityTest` |
+| CA-01.3 | Não existe endpoint de cadastro de família ou de usuário. **Evidência (P-010):** não há endpoint de cadastro (D-11); rotas listadas no README |
+| CA-01.4 | Os seeds criam pelo menos duas famílias, com membros suficientes para todos os cenários da [seção 8](#8-cenários-de-demonstração). **Evidência (P-010):** `DemoDataIntegrationTest`; `R__demo_families.sql` |
 
 ### RF-02 — Objetivos financeiros
 
@@ -258,3 +258,23 @@ Padrões adotados provisoriamente; detalhes em [decisoes-de-negocio.md](decisoes
 | RF-05 | DT-04 |
 | RF-07 | D-10, D-20, T-02 |
 | RS-01..RS-07 | DT-02, DT-03, DT-04, DT-05, D-09, D-10 |
+
+## 11. Situação final (P-010, 2026-10-23)
+
+Todos os requisitos da POC foram atendidos. As evidências estão nos critérios de aceitação acima,
+nas evidências do [ADR-0001](adr/0001-estrategia-multitenant.md#evidências-finais) e no
+[roteiro de demonstração](demonstracao.md).
+
+| Requisito | Situação | Evidência principal |
+|---|---|---|
+| RF-01 Famílias e membros | Atendido | `LoginIntegrationTest`, `DemoDataIntegrationTest` |
+| RF-02 Objetivos | Atendido | `GoalLifecycleIntegrationTest`, `GoalListingIntegrationTest`, `GoalProgressIntegrationTest` |
+| RF-03 Participação e visibilidade | Atendido | `GoalAuthorizationIntegrationTest`, `GoalMembershipIntegrationTest` |
+| RF-04 Contribuições | Atendido | `ContributionAuthorizationIntegrationTest`, `ContributionRulesIntegrationTest`, `ContributionListingIntegrationTest` |
+| RF-05 Autenticação | Atendido | `LoginIntegrationTest`, `MeIntegrationTest`, ADR-0002 |
+| RF-06 Isolamento e autorização | Atendido | RS-01..RS-07 abaixo |
+| RF-07 Interface | Atendido | Testes do frontend (28) e roteiro no navegador |
+| RS-01..RS-07 | Atendidos | Tabela de evidências finais do ADR-0001, com testes de mutação |
+
+Todos os itens provisórios (PV-01..PV-07) foram decididos (D-13..D-20). Os itens fora de escopo
+estão na [seção 2](#2-escopo) e as limitações aceitas, no ADR-0001.
