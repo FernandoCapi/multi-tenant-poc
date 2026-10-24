@@ -9,9 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +43,11 @@ public class ContributionService {
     /** "Today" for the not-in-the-future rule (D-18). */
     static final ZoneId BUSINESS_ZONE = ZoneId.of("America/Sao_Paulo");
 
+    static final int MAX_PAGE_SIZE = 100;
+
     private static final String ALREADY_REVERSED_MESSAGE = "Esta contribuição já foi estornada.";
+    private static final Sort MOST_RECENT_FIRST = Sort.by(
+            Sort.Order.desc("contributedOn"), Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
 
     private final ContributionRepository contributionRepository;
     private final ContributionReversalRepository reversalRepository;
@@ -91,6 +99,27 @@ public class ContributionService {
         Contribution contribution = contributionRepository.save(new Contribution(goalId, contributorId,
                 currentUser, request.amount(), contributedOn, request.note(), clock.instant()));
         return toResponses(List.of(contribution), Map.of()).getFirst();
+    }
+
+    /**
+     * Every member of the goal sees every contribution, reversed ones included and flagged
+     * (CA-03.7, CA-04.13). The page size is capped at {@link #MAX_PAGE_SIZE}.
+     */
+    @Transactional(readOnly = true)
+    public ContributionPageResponse list(UUID goalId, int page, int size) {
+        accessService.requireVisible(goalId);
+        if (page < 0 || size < 1) {
+            throw new InvalidContributionException("Parâmetros de paginação inválidos.");
+        }
+        int pageSize = Math.min(size, MAX_PAGE_SIZE);
+        Page<Contribution> contributions = contributionRepository.findByGoalId(goalId,
+                PageRequest.of(page, pageSize, MOST_RECENT_FIRST));
+        List<UUID> ids = contributions.getContent().stream().map(Contribution::getId).toList();
+        Map<UUID, ContributionReversal> reversals = ids.isEmpty() ? Map.of()
+                : reversalRepository.findByContributionIdIn(ids).stream()
+                        .collect(Collectors.toMap(ContributionReversal::getContributionId, Function.identity()));
+        return new ContributionPageResponse(toResponses(contributions.getContent(), reversals),
+                page, pageSize, contributions.getTotalElements(), contributions.getTotalPages());
     }
 
     /**
