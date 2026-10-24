@@ -579,3 +579,17 @@ Faça as correções necessárias
   `fix(frontend): prevent form fields from overlapping`. A verificação por medição de geometria no
   navegador encontrou e corrigiu um segundo defeito, não visível na captura: abaixo de ~600px, a
   coluna do detalhe ficava mais larga que a tela.
+
+---
+
+## P-009 (ajuste 2) — Data da contribuição sem dias futuros
+
+- **Data:** 2026-10-23
+- **Prompt:** *"No componente de data, bloqueie a opção de selecionar uma data superior a data de hoje, ao
+  invés de avisar que não é possível após a tentativa"*
+- **Resultado:** o campo de data do formulário de contribuição recebeu `max` igual ao dia de hoje no fuso
+  America/Sao_Paulo (o mesmo do backend, D-18): o seletor não oferece dias futuros e uma data futura
+  digitada impede o envio, sem requisição. A data-limite do objetivo (tela de criação) continua livre,
+  porque é naturalmente futura. O backend continua rejeitando datas futuras (422).
+- **Verificação:** 23 testes de frontend (2 novos: "hoje" em São Paulo e atributo `max` no formulário);
+  no navegador, `max = 2026-10-23`, data 2026-10-24 → `rangeOverflow`, formulário inválido, 0 requisições POST.

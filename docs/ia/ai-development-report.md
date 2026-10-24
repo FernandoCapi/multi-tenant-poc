@@ -384,3 +384,12 @@ As alterações das mutações foram desfeitas; o arquivo restaurado foi compara
 - `npm test` (21), `npm run lint` e `npm run build` verdes depois da correção.
 - **Limitação:** as larguras estreitas foram simuladas pela largura do `body`, e não por uma janela
   realmente estreita; a captura de tela nessas larguras não foi possível.
+
+---
+
+## P-009 (ajuste 2) — Data da contribuição sem dias futuros (2026-10-23)
+
+- Pedido do usuário: impedir a seleção de datas futuras, em vez de mostrar o erro do backend depois do envio.
+- `max` no campo de data da contribuição, calculado em America/Sao_Paulo por `todayInSaoPaulo()`.
+- Verificado: `npm test` (23), lint e build; no navegador, data futura bloqueada pelo próprio formulário,
+  sem requisição. A validação do backend (D-18) segue como autoridade.
