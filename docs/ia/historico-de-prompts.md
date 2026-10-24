@@ -16,6 +16,7 @@
 | P-006 | 2026-10-22 | Planejamento das próximas etapas e implementação da autenticação, do tenant vindo do JWT e dos seeds | `backend/` (auth, tenant, user, family, V4, seed), `infra/postgres/init`, `bruno/auth`, ADR-0001, ADR-0002, `docs/setup-local.md`, README |
 | P-007 | 2026-10-23 | Objetivos, membros, autorização por objetivo e progresso (só leitura) | `backend/` (goal, family, V5), `bruno/goals`, `docker-compose.yml` (porta configurável), decisões D-14..D-16, ADR-0001, README, setup |
 | P-008 | 2026-10-23 | Contribuições e estornos (registro, estorno, listagem paginada) | `backend/` (contribution), `bruno/contributions`, decisões D-17..D-19, ADR-0001, README, setup |
+| P-009 | 2026-10-23 | Frontend de demonstração (React + Vite + TS) | `frontend/`, `docker-compose.yml` (serviço frontend), D-20, T-02, README, setup |
 
 ---
 
@@ -526,3 +527,34 @@ Mudança aprovada e mergeada. Crie a nova branch e prossiga com a mudança seque
   insert-only.
 - 160 testes passando; 2 testes de mutação; ambiente Compose e coleção Bruno (38/38 requisições, duas
   execuções seguidas) verificados.
+
+---
+
+## P-009 — Frontend de demonstração
+
+- **Data:** 2026-10-23
+- **Ferramenta/modelo:** Claude Code, modelo Claude Opus 5.5. Planejamento em plan mode, implementação
+  após aprovação; verificação final no navegador com a extensão Claude in Chrome.
+- **Branch:** `feat/p-009-frontend`, criada a partir da `main` (`2a926eb`, merge do PR #5) no repositório local.
+
+### Prompt
+
+```text
+Mudança mergeada. Prossiga para a p-009
+```
+
+### Respostas do usuário (todas as recomendações da IA)
+
+| Pergunta | Resposta |
+|---|---|
+| PV-07 — quais telas | Obrigatórios + estorno e criação → D-20 |
+| Estilo | CSS próprio simples → T-02 |
+| Token no navegador | `sessionStorage` → T-02 |
+| Execução local | Vite dev + Compose com nginx → T-02 |
+
+### Resultado
+
+- Frontend com login, lista, detalhe (progresso, membros, total por membro, contribuições paginadas),
+  registro e estorno de contribuição, transições de status e criação de objetivo; nginx no Compose.
+- 21 testes de frontend, lint e build verdes; smoke test do nginx; roteiro no navegador com os
+  usuários Carlos e Pedro.

@@ -6,7 +6,7 @@
 
 ## Situação atual
 
-Até a etapa P-007 (2026-10-23): **2 sugestões incorretas ou inadequadas registradas** (SI-001, SI-002).
+Até a etapa P-009 (2026-10-23): **3 sugestões incorretas ou inadequadas registradas** (SI-001, SI-002, SI-003).
 
 A recomendação não adotada em P-001 (IA-01, papel familiar + ACL) não entra aqui: foi uma
 preferência de modelagem do usuário, não um erro técnico.
@@ -58,3 +58,20 @@ Ver [decisoes-influenciadas-pela-ia.md](decisoes-influenciadas-pela-ia.md).
 - **Decisão tomada:** manter a implementação; corrigir a expectativa no report e no ADR-0001. O cenário
   Bruno verifica explicitamente que o Videogame não aparece para o Carlos.
 - **Aprendizado:** derivar números esperados dos dados de origem (seeds) e das regras, não de memória.
+
+### SI-003 — Regra de exibição errada no plano da P-009
+
+- **Data / etapa:** 2026-10-23, P-009 (planejamento).
+- **Sugestão da IA:** o plano dizia que o formulário de contribuição aparece "se `iContribute`" e
+  listava como verificação "Ana não vê o formulário na Parcela do carro".
+- **Problema:** pela D-03, o dono registra em nome de qualquer participante. A Ana é dona da Parcela do
+  carro (sem contribuir) e pode registrar pelo Carlos; esconder o formulário dela deixaria uma ação
+  legítima sem tela. O plano repetiu o tipo de erro da SI-002: derivou o comportamento esperado sem
+  conferir as regras já decididas.
+- **Evidência:** `docs/decisoes-de-negocio.md` (D-03) e a matriz de permissões em `docs/requisitos.md` §7
+  ("Registrar em nome de outro membro: DONO ✅"); seed: Ana é `OWNER` com `contributes = false`.
+- **Decisão tomada:** o formulário aparece para quem contribui ou para o dono; a lista de contribuintes
+  só traz membros que contribuem, então o dono que não contribui não aparece nela. Teste em
+  `GoalDetailPage.test.tsx`; regra registrada na D-20.
+- **Aprendizado:** antes de escrever o roteiro de verificação de um plano, conferir cada expectativa
+  contra a matriz de permissões e os seeds.

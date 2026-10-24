@@ -16,16 +16,17 @@
 | P-006 | 2026-10-22 | Roadmap P-006..P-010 e autenticação | Login JWT, lookup `SECURITY DEFINER`, tenant do token, `/api/me`, seeds, 56 testes, Bruno `auth/` | [historico-de-prompts.md](historico-de-prompts.md#p-006--roadmap-e-autenticação), [ADR-0002](../adr/0002-autenticacao-jwt.md) |
 | P-007 | 2026-10-23 | Objetivos, membros, autorização por objetivo e progresso | API de objetivos/membros, 404/403, lock otimista/pessimista, progresso, 121 testes, Bruno `goals/` | [historico-de-prompts.md](historico-de-prompts.md#p-007--objetivos-membros-e-autorização-por-objetivo), [ADR-0001](../adr/0001-estrategia-multitenant.md#evidências-de-p-007) |
 | P-008 | 2026-10-23 | Contribuições e estornos | Registro, estorno, listagem paginada, 160 testes, Bruno `contributions/` | [historico-de-prompts.md](historico-de-prompts.md#p-008--contribuições-e-estornos), [ADR-0001](../adr/0001-estrategia-multitenant.md#evidências-de-p-008) |
+| P-009 | 2026-10-23 | Frontend de demonstração | React + Vite + TS, nginx no Compose, 21 testes de frontend, roteiro no navegador | [historico-de-prompts.md](historico-de-prompts.md#p-009--frontend-de-demonstração) |
 
 ## Indicadores acumulados
 
 | Indicador | Valor | Observação |
 |---|---|---|
-| Etapas registradas | 8 | P-001..P-008 |
-| Recomendações da IA decididas | 29 | 27 aceitas, 2 não adotadas (IA-01, IA-37) ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
-| Sugestões incorretas evidenciadas | 2 | SI-001, SI-002 ([sugestoes-incorretas.md](sugestoes-incorretas.md)) |
-| Linhas de código produzidas | ≈ 6.540 | Até P-008: Java de produção 2.595, Java de teste 2.567, SQL 298, shell 36, Bruno 1.045 (`wc -l`, inclui linhas em branco e comentários) |
-| Testes automatizados | 160 | Todos passando em 2026-10-23 (`./mvnw test`) |
+| Etapas registradas | 9 | P-001..P-009 |
+| Recomendações da IA decididas | 33 | 31 aceitas, 2 não adotadas (IA-01, IA-37) ([detalhes](decisoes-influenciadas-pela-ia.md)); propostas de plano não adotadas: 2 (IA-18, IA-19) |
+| Sugestões incorretas evidenciadas | 3 | SI-001, SI-002, SI-003 ([sugestoes-incorretas.md](sugestoes-incorretas.md)) |
+| Linhas de código produzidas | ≈ 8.480 | Até P-009: backend (Java de produção 2.595, Java de teste 2.567, SQL 298, shell 36), Bruno 1.045, frontend (código e CSS 1.465, testes 441, nginx/Dockerfile 35) (`wc -l`, inclui linhas em branco e comentários) |
+| Testes automatizados | 181 | Backend 160 (`./mvnw test`) e frontend 21 (`npm test`), todos passando em 2026-10-23 |
 
 ---
 
@@ -318,3 +319,51 @@ As alterações das mutações foram desfeitas; o arquivo restaurado foi compara
   da linha do objetivo e o `UNIQUE` do banco, sem teste dedicado.
 - Frontend (P-009) e consolidação (P-010).
 - Sem push nem PR (não solicitados).
+
+---
+
+## P-009 — Frontend de demonstração (2026-10-23)
+
+**Ferramenta:** Claude Code, modelo Claude Opus 5.5; extensão Claude in Chrome para a verificação no navegador.
+
+### O que a IA fez
+
+- Fez 4 perguntas; as 4 recomendações foram aceitas.
+- Gerou o projeto com create-vite 9.3.1, removeu os assets de exemplo e implementou:
+  - cliente da API (Bearer, ProblemDetail, 401 encerra a sessão);
+  - sessão em `sessionStorage`;
+  - login, lista com abas, detalhe, formulário de contribuição, estorno com motivo, transições;
+  - criação de objetivo;
+  - Dockerfile, nginx com cabeçalhos de segurança e serviço no Compose.
+- Corrigiu, durante a implementação, a regra de exibição do formulário para o dono que não contribui (SI-003).
+
+### Verificações executadas (saídas lidas)
+
+| Verificação | Resultado |
+|---|---|
+| `npm test` | 21 testes, 5 arquivos, todos passando |
+| `npm run lint` (oxlint) | Sem avisos |
+| `tsc -b` / `npm run build` | Sem erros; build gerado |
+| nginx no Compose | `/` com CSP, `X-Frame-Options`, `nosniff`, `Referrer-Policy`; rota profunda → `index.html`; `/api/auth/login` via proxy; `/actuator` não exposto |
+| Navegador (Carlos) | Login; lista com 3 objetivos; registro de R$ 10,00 para o Pedro (3.450 → 3.460) e estorno com motivo (→ 3.450); contribuições estornadas riscadas |
+| Navegador (Pedro) | Lista sem o Aluguel; link direto do Aluguel → "Objetivo não encontrado." (N-4); na Viagem, sem ações de dono e com "Estornar" só na própria contribuição; sessão mantida ao recarregar |
+| Console do navegador | Sem mensagens ao recarregar a página (nenhum bloqueio de CSP) |
+| Backend | Inalterado nesta etapa; 160 testes (última execução na P-008) |
+
+### Problemas encontrados durante a etapa
+
+- **Linter do template:** o plano citava ESLint, mas o create-vite 9.3.1 gera o projeto com oxlint. O
+  oxlint foi mantido; os avisos que ele levantou (contexto e provider no mesmo arquivo, `setState`
+  dentro de efeito) foram corrigidos.
+- **Variável sem uso num commit intermediário:** o `reload` do detalhe só é usado no commit seguinte;
+  ele foi removido do commit 4 para não deixar o `tsc` com erro e voltou no commit 5.
+- **Digitação no navegador:** a digitação automática falhou por interferência de outra extensão do
+  Chrome; os campos foram preenchidos com `form_input`.
+- **Dado de demonstração:** o teste no navegador deixou na Viagem uma contribuição de R$ 10,00 já
+  estornada (sem efeito no acumulado).
+
+### O que não foi feito nesta etapa
+
+- Cenário da Ana (formulário só com o Carlos como contribuinte) verificado por teste de componente, não no navegador.
+- Testes ponta a ponta automatizados no navegador (ex.: Playwright).
+- Consolidação final (P-010). Sem push nem PR (não solicitados).
