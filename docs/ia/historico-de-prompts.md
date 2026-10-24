@@ -16,6 +16,7 @@
 | P-006 | 2026-10-22 | Planejamento das próximas etapas e implementação da autenticação, do tenant vindo do JWT e dos seeds | `backend/` (auth, tenant, user, family, V4, seed), `infra/postgres/init`, `bruno/auth`, ADR-0001, ADR-0002, `docs/setup-local.md`, README |
 | P-007 | 2026-10-23 | Objetivos, membros, autorização por objetivo e progresso (só leitura) | `backend/` (goal, family, V5), `bruno/goals`, `docker-compose.yml` (porta configurável), decisões D-14..D-16, ADR-0001, README, setup |
 | P-008 | 2026-10-23 | Contribuições e estornos (registro, estorno, listagem paginada) | `backend/` (contribution), `bruno/contributions`, decisões D-17..D-19, ADR-0001, README, setup |
+| P-009 | 2026-10-23 | Frontend de demonstração (React + Vite + TS) | `frontend/`, `docker-compose.yml` (serviço frontend), D-20, T-02, README, setup |
 
 ---
 
@@ -526,3 +527,84 @@ Mudança aprovada e mergeada. Crie a nova branch e prossiga com a mudança seque
   insert-only.
 - 160 testes passando; 2 testes de mutação; ambiente Compose e coleção Bruno (38/38 requisições, duas
   execuções seguidas) verificados.
+
+---
+
+## P-009 — Frontend de demonstração
+
+- **Data:** 2026-10-23
+- **Ferramenta/modelo:** Claude Code, modelo Claude Opus 5.5. Planejamento em plan mode, implementação
+  após aprovação; verificação final no navegador com a extensão Claude in Chrome.
+- **Branch:** `feat/p-009-frontend`, criada a partir da `main` (`2a926eb`, merge do PR #5) no repositório local.
+
+### Prompt
+
+```text
+Mudança mergeada. Prossiga para a p-009
+```
+
+### Respostas do usuário (todas as recomendações da IA)
+
+| Pergunta | Resposta |
+|---|---|
+| PV-07 — quais telas | Obrigatórios + estorno e criação → D-20 |
+| Estilo | CSS próprio simples → T-02 |
+| Token no navegador | `sessionStorage` → T-02 |
+| Execução local | Vite dev + Compose com nginx → T-02 |
+
+### Resultado
+
+- Frontend com login, lista, detalhe (progresso, membros, total por membro, contribuições paginadas),
+  registro e estorno de contribuição, transições de status e criação de objetivo; nginx no Compose.
+- 21 testes de frontend, lint e build verdes; smoke test do nginx; roteiro no navegador com os
+  usuários Carlos e Pedro.
+
+---
+
+## P-009 (ajuste) — Colisão de campos na interface
+
+- **Data:** 2026-10-23
+- **Prompts:** *"me de um exemplo de acesso para testar o FE"* (a IA listou os usuários demo e o que
+  testar com cada um) e, em seguida, com uma captura de tela do detalhe da Parcela do carro:
+
+```text
+A UI simples é aceitável, mas ela não deve ter bugs visuais de colisão de campos
+Faça as correções necessárias
+```
+
+- **Diagnóstico da IA:** no formulário "Registrar contribuição", os `input` mantinham a largura
+  intrínseca do navegador dentro de colunas de grid de 160px, e os rótulos (itens do grid) não podiam
+  encolher. Por isso o Valor invadia a Data, a Observação invadia o botão e o botão quebrava em duas linhas.
+- **Resultado:** correção só de CSS (e um wrapper na tabela), commit
+  `fix(frontend): prevent form fields from overlapping`. A verificação por medição de geometria no
+  navegador encontrou e corrigiu um segundo defeito, não visível na captura: abaixo de ~600px, a
+  coluna do detalhe ficava mais larga que a tela.
+
+---
+
+## P-009 (ajuste 2) — Data da contribuição sem dias futuros
+
+- **Data:** 2026-10-23
+- **Prompt:** *"No componente de data, bloqueie a opção de selecionar uma data superior a data de hoje, ao
+  invés de avisar que não é possível após a tentativa"*
+- **Resultado:** o campo de data do formulário de contribuição recebeu `max` igual ao dia de hoje no fuso
+  America/Sao_Paulo (o mesmo do backend, D-18): o seletor não oferece dias futuros e uma data futura
+  digitada impede o envio, sem requisição. A data-limite do objetivo (tela de criação) continua livre,
+  porque é naturalmente futura. O backend continua rejeitando datas futuras (422).
+- **Verificação:** 23 testes de frontend (2 novos: "hoje" em São Paulo e atributo `max` no formulário);
+  no navegador, `max = 2026-10-23`, data 2026-10-24 → `rangeOverflow`, formulário inválido, 0 requisições POST.
+
+---
+
+## P-009 (ajuste 3) — Máscara de BRL nos campos monetários
+
+- **Data:** 2026-10-23
+- **Prompt:** *"Em todos os campos monetários, formate automaticamente para brl enquanto o usuário digita"*
+- **Resultado:** componente `MoneyInput` usado no valor da contribuição e no valor-alvo do novo objetivo
+  (os dois únicos campos monetários). Máscara no estilo calculadora: só dígitos contam e preenchem da
+  direita para a esquerda (`2550` → R$ 25,50); Backspace remove o último dígito; colar "R$ 1.234,56"
+  funciona; campo vazio continua vazio (o `required` segue valendo). O valor é mantido em centavos
+  inteiros e convertido para o decimal da API só no envio, sem aritmética de ponto flutuante na tela.
+- **Verificação:** 28 testes de frontend (novos: `MoneyInput.test.tsx` e `parseCents`/`centsToAmount`);
+  no navegador, digitação real: `123456` → R$ 1.234,56, dois Backspaces → R$ 12,34; no novo objetivo,
+  `1200000` → R$ 12.000,00. Nada foi enviado durante a verificação.

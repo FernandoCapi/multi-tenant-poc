@@ -30,7 +30,9 @@
 | D-19 | Listagem de contribuições paginada | P-008 | Não adotada (o usuário escolheu paginação; a IA recomendava lista completa) |
 | C-01 | Convenção de idioma | P-001, revisão do plano | Definida pelo usuário |
 | C-02 | Nome do projeto: Vesta; pacote `com.vesta` | P-003 | Definida pelo usuário |
+| D-20 | Telas do frontend (era PV-07) | P-009 | Aceita |
 | T-01 | Atualização das versões da stack (DT-01) | P-003 | Definida pelo usuário |
+| T-02 | Escolhas técnicas do frontend (CSS próprio, token em sessionStorage, nginx no Compose) | P-009 | Aceita |
 
 ---
 
@@ -202,6 +204,18 @@
 - **Visibilidade:** todos os vinculados ao objetivo, inclusive quem não contribui, veem todas as
   contribuições (CA-03.7, CA-04.13). Sem vínculo → 404.
 
+## D-20 — Telas do frontend
+
+- **Decisão:** a interface cobre login; lista de objetivos (ativos e concluídos, e arquivados numa aba
+  própria); detalhe com progresso, membros, total por membro e contribuições paginadas; registrar e
+  estornar contribuição; concluir, reabrir, arquivar e desarquivar; criar objetivo com membros
+  iniciais. A gestão posterior de membros (adicionar, mudar papel, remover, sair) fica só na coleção Bruno.
+- **Origem:** era PV-07; confirmado em P-009.
+- **Opções consideradas:** obrigatórios + estorno e criação (escolhida); só os obrigatórios do RF-07; tudo, inclusive membros.
+- **Regra de exibição:** a interface só esconde o que o backend rejeitaria (CA-07.3). O formulário de
+  contribuição aparece para quem contribui **ou** para o dono, porque o dono que não contribui ainda
+  registra em nome de um participante (D-03). Nesse caso, ele não aparece na lista de contribuintes.
+
 ## C-02 — Nome do projeto e pacote
 
 - **Decisão:** o projeto se chama **Vesta**. Pacote base Java: `com.vesta`; artefato `vesta-backend`;
@@ -221,6 +235,21 @@
 
 ---
 
+## T-02 — Escolhas técnicas do frontend
+
+- **Decisão:** React 19 + Vite 8 + TypeScript (create-vite 9.3.1, com oxlint como linter do template);
+  `react-router` como única dependência de runtime além do React; CSS próprio num único
+  `styles.css`, sem biblioteca de UI; token JWT em `sessionStorage` (sobrevive a recarregar a página
+  e some ao fechar a aba); desenvolvimento com `npm run dev` e proxy de `/api`; no Compose, um serviço
+  `frontend` com nginx servindo o build e fazendo proxy de `/api` para o backend, sem CORS.
+- **Segurança:** o React escapa o conteúdo renderizado e não há HTML vindo do usuário. O nginx envia
+  `Content-Security-Policy: default-src 'self'` (com `frame-ancestors 'none'`), `X-Frame-Options`,
+  `X-Content-Type-Options` e `Referrer-Policy`, o que reduz o impacto de um XSS sobre o token guardado
+  no navegador. O token vale 60 minutos (ADR-0002).
+- **Origem:** definida pelo usuário em P-009 a partir das recomendações da IA.
+
+---
+
 ## Itens pendentes de validação
 
 Padrões adotados provisoriamente pela IA para não bloquear a especificação. **Não foram aprovados
@@ -235,4 +264,4 @@ correspondente.
 | ~~PV-04~~ | **Confirmado em P-008 → D-18.** | — |
 | ~~PV-05~~ | **Confirmado em P-003 → D-13.** | — |
 | ~~PV-06~~ | **Confirmado em P-007 → D-16.** | — |
-| PV-07 | Fluxos de interface além dos obrigatórios (estorno, criação/edição, gestão de membros) podem ser demonstrados só pela coleção Bruno. | RF-07 exige apenas login, objetivos, progresso e contribuição. |
+| ~~PV-07~~ | **Confirmado em P-009 → D-20.** | — |

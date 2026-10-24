@@ -7,10 +7,10 @@ famílias (tenants) e controle de acesso por objetivo dentro de cada família.
 A POC também documenta como o Claude Code apoiou análise, arquitetura, implementação, testes,
 revisão e documentação.
 
-> **Estado atual (P-008):** backend completo da POC: esquema com Row-Level Security forçada, login
-> com JWT, tenant vindo do token, objetivos e membros com autorização por objetivo, contribuições e
-> estornos imutáveis, progresso financeiro, duas famílias de demonstração e testes automatizados de
-> isolamento. Ainda não há frontend (P-009).
+> **Estado atual (P-009):** POC funcional de ponta a ponta: backend com Row-Level Security forçada,
+> login JWT, autorização por objetivo, contribuições e estornos imutáveis e progresso financeiro;
+> frontend React de demonstração; duas famílias de demonstração; testes automatizados no backend e no
+> frontend. Falta a consolidação final (P-010).
 
 ## API disponível
 
@@ -50,7 +50,8 @@ Usuários de demonstração (senha `vesta-demo`) em [docs/setup-local.md](docs/s
 | Testcontainers | testes de integração com PostgreSQL real |
 | Docker Compose | ambiente local |
 | Bruno | coleção de requisições |
-| React + Vite + TypeScript | frontend (etapa futura) |
+| React 19 + Vite 8 + TypeScript | frontend de demonstração (`react-router`, CSS próprio, Vitest) |
+| nginx 1.28 | serve o frontend e faz proxy de `/api` no Compose |
 
 ## Estrutura
 
@@ -66,9 +67,10 @@ backend/                 API Spring Boot (pacote com.vesta)
   src/main/resources/db/seed/       famílias de demonstração (só no perfil local)
   src/test/java/com/vesta/          testes de isolamento, autenticação e dados demo
 infra/postgres/init/     criação das roles app_owner, app_user e app_auth
+frontend/                app React (src/api, src/auth, src/pages, src/components), nginx.conf, Dockerfile
 bruno/                   coleção Bruno
 docs/                    requisitos, modelo de domínio, decisões, ADRs e registros de IA
-docker-compose.yml       PostgreSQL + backend
+docker-compose.yml       PostgreSQL + backend + frontend
 ```
 
 ## Arquitetura de isolamento
@@ -93,12 +95,14 @@ Passo a passo completo, incluindo pré-requisitos, em [docs/setup-local.md](docs
 
 ```bash
 cp .env.example .env
-docker compose up -d --build                  # PostgreSQL + backend (perfil local, com dados demo)
+docker compose up -d --build                  # PostgreSQL + backend + frontend (perfil local, com dados demo)
+# Abra http://localhost:3000 e entre com um usuário demo (ex.: carlos@silva.demo)
 curl http://localhost:8080/actuator/health    # {"status":"UP",...}
 curl -X POST http://localhost:8080/api/auth/login -H 'Content-Type: application/json' \
   -d '{"email":"carlos@silva.demo","password":"vesta-demo"}'
 
-cd backend && ./mvnw verify                   # testes (exige Docker em execução e JDK 21)
+cd backend && ./mvnw verify                   # testes do backend (exige Docker em execução e JDK 21)
+cd frontend && npm ci && npm test            # testes do frontend (Node 22)
 ```
 
 ## Documentação

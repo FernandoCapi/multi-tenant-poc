@@ -57,6 +57,12 @@
 | IA-37 | Listagem de contribuições | Lista completa, sem paginação (volume pequeno da POC) | Não adotada | D-19: paginada (`size` padrão 20, máx. 100) | P-008 |
 | IA-38 | Visibilidade das contribuições | Todos os vinculados veem todas (CA-03.7, CA-04.13) | Aceita | Implementado | P-008 |
 | IA-39 | Detalhes de implementação | Entidades `@Immutable`; lock da linha do objetivo no registro e no estorno; `UNIQUE` do banco decide estornos concorrentes (409); a checagem de "contribui" vem antes da validação do corpo | Aceita (plano aprovado) | Implementado | P-008 |
+| IA-40 | PV-07 | Telas obrigatórias + estorno, criação e status; membros só no Bruno | Aceita | D-20 | P-009 |
+| IA-41 | Estilo | CSS próprio, sem biblioteca de UI | Aceita | T-02 | P-009 |
+| IA-42 | Token | `sessionStorage`, com CSP restritiva no nginx | Aceita | T-02 | P-009 |
+| IA-43 | Execução | Vite dev com proxy + serviço nginx no Compose | Aceita | T-02 | P-009 |
+| IA-44 | Regra de exibição | Formulário de contribuição também para o dono que não contribui (D-03); o plano dizia o contrário | Correção da IA durante a implementação | Ver SI-003 | P-009 |
+| IA-45 | Layout do frontend | CSS do formulário entregue na P-009 com campos sobrepostos | Incorreta | Ver SI-004; corrigido no mesmo branch | P-009 (ajuste) |
 
 ## Observações
 
