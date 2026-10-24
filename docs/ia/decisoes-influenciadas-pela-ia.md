@@ -52,6 +52,11 @@
 | IA-32 | Detalhes de implementação | `GoalAccessService` (404 → 403 → 422 → 409, com validação do corpo depois do acesso); lock pessimista para o invariante do último dono; lock otimista (`version`); totais só para objetivos listados; `familyId` do corpo ignorado | Aceita (plano aprovado) | Implementado | P-007 |
 | IA-33 | Porta do Postgres | Não alterar o container de outro projeto que ocupa a 5432; tornar a porta configurável (`POSTGRES_PORT`) | Decisão da IA durante a implementação | `docker-compose.yml`, `application.yml` | P-007 |
 | IA-34 | Verificação do plano | O plano dizia que Carlos veria 4 objetivos nos dados demo | Incorreta | Ver SI-002 | P-007 |
+| IA-35 | PV-01 | Estorno só em ATIVO | Aceita | D-17 | P-008 |
+| IA-36 | PV-04 | Data informada, não futura, com "hoje" no fuso America/Sao_Paulo | Aceita | D-18 | P-008 |
+| IA-37 | Listagem de contribuições | Lista completa, sem paginação (volume pequeno da POC) | Não adotada | D-19: paginada (`size` padrão 20, máx. 100) | P-008 |
+| IA-38 | Visibilidade das contribuições | Todos os vinculados veem todas (CA-03.7, CA-04.13) | Aceita | Implementado | P-008 |
+| IA-39 | Detalhes de implementação | Entidades `@Immutable`; lock da linha do objetivo no registro e no estorno; `UNIQUE` do banco decide estornos concorrentes (409); a checagem de "contribui" vem antes da validação do corpo | Aceita (plano aprovado) | Implementado | P-008 |
 
 ## Observações
 
