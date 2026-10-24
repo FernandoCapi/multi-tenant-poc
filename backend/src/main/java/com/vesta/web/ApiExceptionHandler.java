@@ -16,6 +16,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import com.vesta.auth.InvalidCredentialsException;
+import com.vesta.contribution.InvalidContributionException;
 import com.vesta.family.FamilyMemberNotFoundException;
 import com.vesta.goal.GoalMemberNotFoundException;
 import com.vesta.goal.GoalNotFoundException;
@@ -78,6 +79,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     ProblemDetail handleConstraintViolation() {
         return invalidData();
+    }
+
+    @ExceptionHandler(InvalidContributionException.class)
+    ProblemDetail handleInvalidContribution(InvalidContributionException ex) {
+        return problem(HttpStatus.UNPROCESSABLE_CONTENT, "Dados inválidos", ex.getMessage());
     }
 
     private static ProblemDetail problem(HttpStatus status, String title, String detail) {
