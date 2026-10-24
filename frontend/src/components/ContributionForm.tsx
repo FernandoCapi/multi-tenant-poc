@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError, api } from '../api/client'
 import type { GoalDetail } from '../api/types'
+import { todayInSaoPaulo } from '../format'
 
 interface Props {
   goal: GoalDetail
@@ -72,7 +73,8 @@ export function ContributionForm({ goal, currentUserId, onRegistered }: Props) {
       </label>
       <label>
         Data
-        <input type="date" value={contributedOn} onChange={(e) => setContributedOn(e.target.value)} />
+        {/* Future days are disabled in the picker; the backend still rejects them (D-18) */}
+        <input type="date" max={todayInSaoPaulo()} value={contributedOn} onChange={(e) => setContributedOn(e.target.value)} />
       </label>
       <label>
         Observação

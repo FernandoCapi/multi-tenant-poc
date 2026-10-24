@@ -6,6 +6,7 @@ import { AppRoutes } from '../App'
 import type { GoalDetail } from '../api/types'
 import { AuthProvider } from '../auth/AuthProvider'
 import { setToken } from '../auth/tokenStorage'
+import { todayInSaoPaulo } from '../format'
 import { carlos, contributionsPage, goal, jsonResponse } from '../test/fixtures'
 
 type Handler = (url: string, init?: RequestInit) => Response | undefined
@@ -108,6 +109,14 @@ describe('GoalDetailPage', () => {
 
     const post = fetchMock.mock.calls.find(([url, init]) => url === '/api/goals/trip/contributions' && init?.method === 'POST')
     expect(JSON.parse(post?.[1]?.body as string)).toEqual({ amount: 25.5, contributorId: 'pedro' })
+  })
+
+  it('does not let a future date be picked for a contribution', async () => {
+    mockApi(goal())
+    renderDetail()
+
+    await screen.findByRole('heading', { name: 'Viagem de férias' })
+    expect(screen.getByLabelText('Data')).toHaveAttribute('max', todayInSaoPaulo())
   })
 
   it('asks for a reason before reversing', async () => {

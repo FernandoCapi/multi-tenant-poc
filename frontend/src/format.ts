@@ -8,6 +8,13 @@ const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', {
   timeStyle: 'short',
   timeZone: 'America/Sao_Paulo',
 })
+// en-CA formats as yyyy-mm-dd, the value format of <input type="date">
+const isoDateInSaoPaulo = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' })
+
+/** "Today" in the same time zone the backend uses to reject future contributions (D-18). */
+export function todayInSaoPaulo(now: Date = new Date()): string {
+  return isoDateInSaoPaulo.format(now)
+}
 
 /** Money comes already calculated by the backend; the client only formats it. */
 export function formatMoney(amount: number): string {
