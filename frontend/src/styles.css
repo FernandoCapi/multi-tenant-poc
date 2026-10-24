@@ -240,6 +240,79 @@ textarea {
   background: #2e8b57;
 }
 
+/* Goal detail */
+.detail {
+  display: grid;
+  gap: var(--space);
+}
+
+.detail .goal-heading h1 {
+  margin: 0;
+}
+
+.detail > p {
+  margin: 0;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space);
+}
+
+.plain-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.plain-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+.table .amount {
+  white-space: nowrap;
+}
+
+.table tr.reversed td {
+  color: var(--color-muted);
+}
+
+.table tr.reversed .amount {
+  text-decoration: line-through;
+}
+
+.reversal-note {
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .progress-text {
   display: flex;
   flex-wrap: wrap;

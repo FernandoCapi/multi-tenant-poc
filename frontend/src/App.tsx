@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/useAuth'
 import { Layout } from './components/Layout'
+import { GoalDetailPage } from './pages/GoalDetailPage'
 import { GoalsPage } from './pages/GoalsPage'
 import { LoginPage } from './pages/LoginPage'
 
@@ -28,6 +29,7 @@ export function AppRoutes() {
       <Route element={<Layout />}>
         <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
         <Route path="/" element={<RequireAuth><GoalsPage /></RequireAuth>} />
+        <Route path="/goals/:goalId" element={<RequireAuth><GoalDetailPage /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
