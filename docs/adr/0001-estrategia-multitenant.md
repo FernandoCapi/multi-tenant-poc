@@ -1,10 +1,11 @@
 # ADR-0001 — Estratégia multitenant e isolamento entre famílias
 
-- **Status:** Proposto
+- **Status:** Aceito (2026-10-23, P-010), com base nas [evidências finais](#evidências-finais)
 - **Data:** 2026-10-21
 - **Etapa:** P-001 (especificação); complementado em P-003 (2026-10-22) com a implementação e as
   evidências da fundação — ver [Implementação](#implementação-p-003) e [Evidências](#evidências);
-  em P-006 (2026-10-22) com o lookup de login e o tenant vindo do JWT
+  em P-006 (2026-10-22) com o lookup de login e o tenant vindo do JWT; P-007 e P-008 (2026-10-23)
+  com a autorização por objetivo e as contribuições
 - **Relacionado:** [ADR-0002 — Autenticação com JWT](0002-autenticacao-jwt.md)
 - **Relacionados:** DT-02, DT-03, DT-04, DT-05; [requisitos](../requisitos.md) RS-01..RS-07; [modelo de domínio](../modelo-de-dominio.md)
 
@@ -322,6 +323,33 @@ A concorrência real entre dois donos saindo ao mesmo tempo não foi testada; a 
 Ana recebeu 403 ao registrar na Parcela do carro (N-6); texto com acentos enviado em UTF-8 foi
 gravado e devolvido sem alteração.
 
+## Evidências finais
+
+Resumo para a aceitação (P-010). Os detalhes de cada etapa estão nas seções de evidências acima.
+
+| Requisito | Garantia | Evidência automatizada | Testes de mutação | Demonstração |
+|---|---|---|---|---|
+| RS-01 Isolamento entre famílias | 404 em qualquer recurso de outra família; listagens e totais sem dados de outra família | `RowLevelSecurityTest`, `GoalAuthorizationIntegrationTest`, `GoalListingIntegrationTest`, `ContributionAuthorizationIntegrationTest`, `ContributionListingIntegrationTest` | RLS de `goals` removida → 7 testes de banco falham | N-1 (Bruno) |
+| RS-02 Autorização por objetivo | Sem vínculo → 404; sem ser dono → 403 | `GoalAuthorizationIntegrationTest` (27 casos), `ContributionAuthorizationIntegrationTest` (19 casos), `GoalMembershipIntegrationTest` | `requireOwner` desligado → 10 falhas; filtro de vínculo da listagem removido → 2; checagem de `contributes` removida → 2 | N-4, N-5, N-6 (interface e Bruno) |
+| RS-03 Autenticação | JWT HS256 obrigatório; senha com bcrypt | `LoginIntegrationTest`, `MeIntegrationTest`, `LoginCredentialsDatabaseTest` | `app_auth` sem BYPASSRLS → 2 falhas | N-8, N-9 |
+| RS-04 Tenant do servidor | `family_id` do cliente ignorado; tenant só do token | `MeIntegrationTest`, `GoalListingIntegrationTest`, `RowLevelSecurityTest` (`WITH CHECK`), `TenantContextFilterTest` | Filtro de tenant não registrado → 2 falhas | N-2 |
+| RS-05 RLS sem `WHERE` | `app_user` sem superuser/BYPASSRLS; RLS forçada em todas as tabelas | `RowLevelSecurityTest`, `DatabaseSecurityTest`, `TenantIsolationIntegrationTest` | RLS de `goals` removida → falhas também no teste de catálogo | N-3 (`infra/demo/n3-rls-sem-where.sql`) |
+| RS-06 Falha fechada | Sem tenant → 0 linhas, escrita rejeitada | `RowLevelSecurityTest`, `TenantIsolationIntegrationTest` | Tenant não definido na transação → 4 de 5 testes Spring quebram | N-3, passo 3 |
+| RS-07 Pool de conexões | Tenant só na transação (`set_config(..., true)`) | `TenantIsolationIntegrationTest` (mesmo `pg_backend_pid`) | — | — |
+
+Totais medidos na consolidação: 160 testes no backend e 28 no frontend, todos passando; a CI
+(`.github/workflows/ci.yml`) roda os dois conjuntos a cada push e PR para a `main`.
+
+**Limitações conhecidas, aceitas para a POC:**
+
+- **Concorrência real sem teste dedicado:** dois donos saindo ao mesmo tempo, estorno duplicado
+  simultâneo, ou registro e conclusão simultâneos. As proteções são o lock pessimista da linha do
+  objetivo, o `UNIQUE` do banco e o lock otimista (`version`).
+- **Revogação de acesso só por expiração do token**, em até 60 minutos (ADR-0002, alternativa C).
+- **ACL por objetivo só na aplicação**, protegida por testes. A RLS por objetivo (alternativa D)
+  fica como evolução.
+- **`app_owner` pode executar `SET ROLE app_auth`.** A role é usada só por migrations (seção 7).
+
 ## Consequências
 
 - O isolamento entre famílias depende de três camadas independentes (aplicação, persistência, RLS) e
@@ -336,3 +364,4 @@ gravado e devolvido sem alteração.
   Situação em P-007: RS-01 pela API e RS-02 têm evidência para objetivos e membros; faltam os
   endpoints de contribuições (P-008). Situação em P-008: RS-01..RS-07 têm evidência em todos os
   endpoints de negócio; a mudança do status para Aceito fica para a consolidação (P-010).
+  **P-010: aceito**, com as [evidências finais](#evidências-finais) e as limitações listadas.
