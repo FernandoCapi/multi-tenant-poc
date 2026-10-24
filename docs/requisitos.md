@@ -95,7 +95,7 @@ política da [seção 7](#7-política-de-respostas-de-erro).
 | CA-03.4 | Dado um DONO, quando tenta adicionar um usuário de outra família (ou um id inexistente), então recebe **404**, sem revelar se o usuário existe em outra família. **Testado (P-007):** `GoalMembershipIntegrationTest` |
 | CA-03.5 | Dado o único DONO de um objetivo, quando tenta sair, ser rebaixado a MEMBRO ou ser removido, então a operação é rejeitada com **409**. **Testado (P-007):** `GoalMembershipIntegrationTest` |
 | CA-03.6 | Dado um MEMBRO, quando sai do objetivo, então passa a receber **404** ao acessá-lo, e suas contribuições continuam no histórico e no acumulado. **Testado (P-007):** `GoalMembershipIntegrationTest`, `GoalProgressIntegrationTest` |
-| CA-03.7 | Dado um membro com `contribui = não`, então ele vê o objetivo, as contribuições e os totais, mas não pode ser contribuinte. **Testado (P-007):** `GoalAuthorizationIntegrationTest` (visualização; a restrição de contribuir entra na P-008) |
+| CA-03.7 | Dado um membro com `contribui = não`, então ele vê o objetivo, as contribuições e os totais, mas não pode ser contribuinte. **Testado (P-007):** `GoalAuthorizationIntegrationTest` (visualização); **P-008:** `ContributionAuthorizationIntegrationTest` (não registra a própria, 403) |
 | CA-03.8 | Todo total agregado apresentado a um usuário (ex.: soma dos seus objetivos) considera somente objetivos que ele pode ver. **Testado (P-007):** `GoalListingIntegrationTest`, `GoalProgressIntegrationTest` |
 
 ### RF-04 — Contribuições financeiras
@@ -107,21 +107,21 @@ política da [seção 7](#7-política-de-respostas-de-erro).
 
 | CA | Critério |
 |---|---|
-| CA-04.1 | Dado um membro com `contribui = sim` em um objetivo ATIVO, quando registra uma contribuição própria com valor válido e data não futura, então ela é criada e o acumulado aumenta pelo valor. |
-| CA-04.2 | Dado um DONO, quando registra uma contribuição em nome de um membro com `contribui = sim`, então o contribuinte é o membro e "registrado por" é o DONO. |
-| CA-04.3 | Dado um MEMBRO, quando tenta registrar uma contribuição em nome de outra pessoa, então recebe **403**. |
-| CA-04.4 | Dado um usuário com `contribui = não`, quando tenta registrar uma contribuição própria, então recebe **403**. |
-| CA-04.5 | Dado um DONO, quando registra uma contribuição em nome de um membro com `contribui = não` ou de alguém que não é membro do objetivo, então recebe **422**. |
-| CA-04.6 | Dado um objetivo CONCLUÍDO ou ARQUIVADO, quando alguém tenta registrar uma contribuição, então recebe **409**. |
-| CA-04.7 | Valor ≤ 0, com mais de duas casas decimais ou com data futura é rejeitado com **422**. |
-| CA-04.8 | Não existem operações para editar ou excluir uma contribuição. |
-| CA-04.9 | Dado um membro, quando estorna uma contribuição da qual é o contribuinte, informando o motivo, então ela deixa de compor o acumulado e o estorno registra autor, data e motivo. |
-| CA-04.10 | Dado um DONO, quando estorna qualquer contribuição do objetivo, então o efeito é o mesmo de CA-04.9. |
-| CA-04.11 | Dado um MEMBRO, quando tenta estornar a contribuição de outra pessoa, então recebe **403**. |
-| CA-04.12 | Estornar uma contribuição já estornada é rejeitado com **409**; estorno sem motivo é rejeitado com **422**. |
-| CA-04.13 | A listagem de contribuições do objetivo mostra todas as contribuições, inclusive as estornadas (sinalizadas), com contribuinte, registrado por, valor e data; a soma das não estornadas é igual ao acumulado. |
-| CA-04.14 | O detalhe do objetivo mostra o total contribuído por membro (contribuições não estornadas). |
-| CA-04.15 | Toda contribuição e todo estorno pertencem à mesma família do objetivo. |
+| CA-04.1 | Dado um membro com `contribui = sim` em um objetivo ATIVO, quando registra uma contribuição própria com valor válido e data não futura, então ela é criada e o acumulado aumenta pelo valor. **Testado (P-008):** `ContributionAuthorizationIntegrationTest`, `ContributionProgressIntegrationTest` |
+| CA-04.2 | Dado um DONO, quando registra uma contribuição em nome de um membro com `contribui = sim`, então o contribuinte é o membro e "registrado por" é o DONO. **Testado (P-008):** `ContributionRulesIntegrationTest` |
+| CA-04.3 | Dado um MEMBRO, quando tenta registrar uma contribuição em nome de outra pessoa, então recebe **403**. **Testado (P-008):** `ContributionAuthorizationIntegrationTest` |
+| CA-04.4 | Dado um usuário com `contribui = não`, quando tenta registrar uma contribuição própria, então recebe **403**. **Testado (P-008):** `ContributionAuthorizationIntegrationTest` |
+| CA-04.5 | Dado um DONO, quando registra uma contribuição em nome de um membro com `contribui = não` ou de alguém que não é membro do objetivo, então recebe **422**. **Testado (P-008):** `ContributionRulesIntegrationTest` |
+| CA-04.6 | Dado um objetivo CONCLUÍDO ou ARQUIVADO, quando alguém tenta registrar uma contribuição, então recebe **409**. **Testado (P-008):** `ContributionRulesIntegrationTest` |
+| CA-04.7 | Valor ≤ 0, com mais de duas casas decimais ou com data futura é rejeitado com **422**. **Testado (P-008):** `ContributionRulesIntegrationTest` |
+| CA-04.8 | Não existem operações para editar ou excluir uma contribuição. **Testado (P-008):** `ContributionListingIntegrationTest`, `RowLevelSecurityTest` (grants) |
+| CA-04.9 | Dado um membro, quando estorna uma contribuição da qual é o contribuinte, informando o motivo, então ela deixa de compor o acumulado e o estorno registra autor, data e motivo. **Testado (P-008):** `ContributionRulesIntegrationTest`, `ContributionProgressIntegrationTest` |
+| CA-04.10 | Dado um DONO, quando estorna qualquer contribuição do objetivo, então o efeito é o mesmo de CA-04.9. **Testado (P-008):** `ContributionAuthorizationIntegrationTest` |
+| CA-04.11 | Dado um MEMBRO, quando tenta estornar a contribuição de outra pessoa, então recebe **403**. **Testado (P-008):** `ContributionAuthorizationIntegrationTest` |
+| CA-04.12 | Estornar uma contribuição já estornada é rejeitado com **409**; estorno sem motivo é rejeitado com **422**. **Testado (P-008):** `ContributionRulesIntegrationTest` |
+| CA-04.13 | A listagem de contribuições do objetivo mostra todas as contribuições, inclusive as estornadas (sinalizadas), com contribuinte, registrado por, valor e data; a soma das não estornadas é igual ao acumulado. **Testado (P-008):** `ContributionListingIntegrationTest` |
+| CA-04.14 | O detalhe do objetivo mostra o total contribuído por membro (contribuições não estornadas). **Testado (P-008):** `GoalProgressIntegrationTest`, `ContributionProgressIntegrationTest` |
+| CA-04.15 | Toda contribuição e todo estorno pertencem à mesma família do objetivo. **Testado (P-008):** `RowLevelSecurityTest` (FK composta), `ContributionAuthorizationIntegrationTest` |
 
 ### RF-05 — Autenticação
 
@@ -152,7 +152,7 @@ tela ou serão demonstrados apenas pela coleção Bruno.
 
 | ID | Requisito | Critérios de aceitação |
 |---|---|---|
-| RS-01 | **Isolamento entre famílias** em leitura, criação, atualização, exclusão, listagem e agregação. | Usuário da família A, usando ids de recursos da família B: detalhe, contribuições, estorno, alteração e exclusão → **404**; listagens e totais nunca incluem dados de B. **P-007:** objetivos e membros testados em `GoalAuthorizationIntegrationTest` e `GoalListingIntegrationTest`; contribuições na P-008. |
+| RS-01 | **Isolamento entre famílias** em leitura, criação, atualização, exclusão, listagem e agregação. | Usuário da família A, usando ids de recursos da família B: detalhe, contribuições, estorno, alteração e exclusão → **404**; listagens e totais nunca incluem dados de B. **P-007:** objetivos e membros testados em `GoalAuthorizationIntegrationTest` e `GoalListingIntegrationTest`; **P-008:** contribuições e estornos em `ContributionAuthorizationIntegrationTest` e `ContributionListingIntegrationTest`. |
 | RS-02 | **Autorização por objetivo** dentro da mesma família. | Filho sem vínculo com o objetivo do aluguel: o objetivo não aparece na listagem, o detalhe e as contribuições retornam **404** e os totais não o incluem. **P-007:** `GoalAuthorizationIntegrationTest`, `GoalListingIntegrationTest`. |
 | RS-03 | **Autenticação obrigatória** nas rotas de negócio. | Ver RF-05. |
 | RS-04 | **Tenant resolvido pelo servidor.** O `family_id` nunca é aceito como entrada do cliente. | Um `family_id` (ou equivalente) enviado no corpo, na query ou em cabeçalho é ignorado ou rejeitado; o recurso é sempre criado/consultado no tenant do usuário autenticado. |
@@ -239,10 +239,10 @@ Todos os cenários acima também devem existir como testes automatizados e na co
 
 Padrões adotados provisoriamente; detalhes em [decisoes-de-negocio.md](decisoes-de-negocio.md#itens-pendentes-de-validação).
 
-- PV-01 Estorno só em objetivo ATIVO.
+- ~~PV-01~~ Estorno só em objetivo ATIVO: **confirmado em P-008 (D-17)**.
 - ~~PV-02~~ Transições de status, incluindo desarquivar: **confirmado em P-007 (D-14)**.
 - ~~PV-03~~ Arquivados ocultos por padrão e visíveis por filtro: **confirmado em P-007 (D-15)**.
-- PV-04 Data da contribuição informada pelo usuário e não futura.
+- ~~PV-04~~ Data da contribuição informada pelo usuário e não futura: **confirmado em P-008 (D-18)**.
 - ~~PV-05~~ Estorno como registro próprio, um por contribuição: **confirmado em P-003 (D-13)**.
 - ~~PV-06~~ Edição dos dados do objetivo apenas em status ATIVO: **confirmado em P-007 (D-16)**.
 - PV-07 Quais fluxos além dos obrigatórios terão tela (RF-07).
@@ -254,7 +254,7 @@ Padrões adotados provisoriamente; detalhes em [decisoes-de-negocio.md](decisoes
 | RF-01 | DT-04, D-11 |
 | RF-02 | D-04, D-08, D-12, D-14, D-15, D-16 |
 | RF-03 | D-01, D-05, D-06, D-07 |
-| RF-04 | D-02, D-03, D-05, D-07, D-12, D-13 |
+| RF-04 | D-02, D-03, D-05, D-07, D-12, D-13, D-17, D-18, D-19 |
 | RF-05 | DT-04 |
 | RF-07 | D-10 |
 | RS-01..RS-07 | DT-02, DT-03, DT-04, DT-05, D-09, D-10 |

@@ -25,6 +25,9 @@
 | D-14 | Transições de status do objetivo, com desarquivar (era PV-02) | P-007 | Aceita |
 | D-15 | Arquivados ocultos na listagem padrão, com filtro (era PV-03) | P-007 | Aceita |
 | D-16 | Dados do objetivo editáveis só em ATIVO (era PV-06) | P-007 | Aceita |
+| D-17 | Estorno só em objetivo ATIVO (era PV-01) | P-008 | Aceita |
+| D-18 | Data da contribuição informada, nunca futura, no fuso de São Paulo (era PV-04) | P-008 | Aceita |
+| D-19 | Listagem de contribuições paginada | P-008 | Não adotada (o usuário escolheu paginação; a IA recomendava lista completa) |
 | C-01 | Convenção de idioma | P-001, revisão do plano | Definida pelo usuário |
 | C-02 | Nome do projeto: Vesta; pacote `com.vesta` | P-003 | Definida pelo usuário |
 | T-01 | Atualização das versões da stack (DT-01) | P-003 | Definida pelo usuário |
@@ -175,6 +178,30 @@
   status a resposta é 409, e o dono reabre ou desarquiva antes de editar.
 - **Origem:** era PV-06; confirmado em P-007.
 
+## D-17 — Estorno só em objetivo ativo
+
+- **Decisão:** contribuições só podem ser estornadas com o objetivo ATIVO, a mesma regra do registro.
+  Para corrigir um objetivo CONCLUÍDO ou ARQUIVADO, o dono o reabre ou desarquiva antes (409 caso contrário).
+- **Origem:** era PV-01; confirmado em P-008.
+- **Justificativa:** o acumulado de um objetivo concluído fica estável.
+
+## D-18 — Data da contribuição
+
+- **Decisão:** o usuário informa a data em que a contribuição foi feita, e o padrão é hoje. Datas
+  futuras são rejeitadas (422). "Hoje" é calculado no fuso America/Sao_Paulo, e a data e hora do
+  registro no servidor (`createdAt`, em UTC) ficam separadas.
+- **Origem:** era PV-04; confirmado em P-008.
+
+## D-19 — Listagem de contribuições paginada
+
+- **Decisão:** `GET /api/goals/{id}/contributions?page=&size=`, com `page` a partir de 0, `size`
+  padrão 20 e máximo 100 (valores maiores são limitados). Ordem: data da contribuição, depois data
+  de registro, da mais recente para a mais antiga. As estornadas aparecem sinalizadas, com motivo,
+  autor e data do estorno.
+- **Opções consideradas:** lista completa (recomendação da IA, pelo volume pequeno da POC); paginada (escolhida pelo usuário).
+- **Visibilidade:** todos os vinculados ao objetivo, inclusive quem não contribui, veem todas as
+  contribuições (CA-03.7, CA-04.13). Sem vínculo → 404.
+
 ## C-02 — Nome do projeto e pacote
 
 - **Decisão:** o projeto se chama **Vesta**. Pacote base Java: `com.vesta`; artefato `vesta-backend`;
@@ -202,10 +229,10 @@ correspondente.
 
 | ID | Padrão provisório | Motivo |
 |---|---|---|
-| PV-01 | Estorno só em objetivo ATIVO; para corrigir um CONCLUÍDO, reabrir antes. | Mantém consistente a regra "conclusão manual" com um acumulado estável. |
+| ~~PV-01~~ | **Confirmado em P-008 → D-17.** | — |
 | ~~PV-02~~ | **Confirmado em P-007 → D-14.** | — |
 | ~~PV-03~~ | **Confirmado em P-007 → D-15.** | — |
-| PV-04 | Data da contribuição informada pelo usuário, não futura; data de registro do servidor separada. | Permite lançar contribuições passadas. |
+| ~~PV-04~~ | **Confirmado em P-008 → D-18.** | — |
 | ~~PV-05~~ | **Confirmado em P-003 → D-13.** | — |
 | ~~PV-06~~ | **Confirmado em P-007 → D-16.** | — |
 | PV-07 | Fluxos de interface além dos obrigatórios (estorno, criação/edição, gestão de membros) podem ser demonstrados só pela coleção Bruno. | RF-07 exige apenas login, objetivos, progresso e contribuição. |

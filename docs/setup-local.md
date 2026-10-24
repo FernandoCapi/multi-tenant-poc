@@ -147,6 +147,10 @@ Compose. Não dependem do banco do Compose nem do `.env`, mas exigem o Docker ro
 | `GoalLifecycleIntegrationTest` | Transições de status, edição só em ATIVO, exclusão e alteração concorrente. |
 | `GoalMembershipIntegrationTest` | Gestão de membros, invariante do último dono e saída do objetivo. |
 | `GoalProgressIntegrationTest` / `GoalProgressTest` | Acumulado sem estornos, restante, excedente, percentual e total por membro. |
+| `ContributionAuthorizationIntegrationTest` | Quem registra e quem estorna: dono, membro, membro sem contribuir, sem vínculo e outra família. |
+| `ContributionRulesIntegrationTest` | Valor, data (não futura, fuso de São Paulo), contribuinte válido, objetivo ativo, estorno com motivo e único. |
+| `ContributionListingIntegrationTest` | Listagem paginada, estornadas sinalizadas, soma igual ao acumulado, sem edição nem exclusão. |
+| `ContributionProgressIntegrationTest` | Registrar e estornar refletem no progresso e no total por membro. |
 
 ## Inspecionar o banco
 
@@ -180,7 +184,10 @@ npx -y @usebruno/cli@4.3.0 run --env local
 A pasta `auth/` cobre login, `/api/me`, `family_id` forjado (N-2), token ausente ou adulterado (N-8)
 e falhas de login com resposta idêntica (N-9). A pasta `goals/` cobre listagem, filho × aluguel (N-4),
 membro sem permissão (N-5), outra família (N-1), criação com `familyId` forjado, membros e
-transições; o objetivo criado é excluído no fim, então a coleção pode ser repetida.
+transições; o objetivo criado é excluído no fim, então a coleção pode ser repetida. A pasta
+`contributions/` cobre registro próprio e em nome de outro, quem não contribui (N-6), estorno,
+listagem paginada e objetivo concluído (N-7). Ela arquiva o objetivo que cria, então cada execução
+deixa um objetivo arquivado na base demo, porque objetivos com contribuições não podem ser excluídos.
 
 ## Solução de problemas
 
@@ -194,4 +201,5 @@ transições; o objetivo criado é excluído no fim, então a coleção pode ser
 | Login demo devolve 401 | Backend rodando sem o perfil `local` num banco sem seed | Rodar com o perfil `local` ao menos uma vez. |
 | `java -version` mostra 8 ou 17 | JDK 21 não ativado neste terminal | Ativar o JDK 21 na sessão (seção acima). |
 | `Bind for 0.0.0.0:5432 failed: port is already allocated` | Outra base local já usa a 5432 | Definir `POSTGRES_PORT=5433` (ou outra livre) no `.env`. |
+| `400` ao enviar texto com acento via `curl` no Git Bash | O shell do Windows não envia o argumento em UTF-8 | Usar a coleção Bruno, ou enviar o corpo de um arquivo UTF-8 (`--data-binary @arquivo.json`). |
 | Porta 8080 ocupada | Outro serviço local | Liberar a porta ou ajustar o mapeamento em `docker-compose.yml`. |
